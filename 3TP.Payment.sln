@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3TP.Payment.Domain", "3TP.Payment.Domain\3TP.Payment.Domain.csproj", "{302881D0-0F27-488A-B889-D3CD2368DA6B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3TP.Payment.Application", "3TP.Payment.Application\3TP.Payment.Application.csproj", "{92AFCB21-FB12-4CA4-8EC5-B7AE5A45A539}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3TP.Payment.Infrastructure", "3TP.Payment.Infrastructure\3TP.Payment.Infrastructure.csproj", "{AF6286A8-4875-4B7C-8FBF-FDC7BF366159}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3TP.Payment.API", "3TP.Payment.API\3TP.Payment.API.csproj", "{40120040-BAFF-465B-BBC6-9777F7E50C5E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{302881D0-0F27-488A-B889-D3CD2368DA6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{302881D0-0F27-488A-B889-D3CD2368DA6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{302881D0-0F27-488A-B889-D3CD2368DA6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{302881D0-0F27-488A-B889-D3CD2368DA6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92AFCB21-FB12-4CA4-8EC5-B7AE5A45A539}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92AFCB21-FB12-4CA4-8EC5-B7AE5A45A539}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92AFCB21-FB12-4CA4-8EC5-B7AE5A45A539}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92AFCB21-FB12-4CA4-8EC5-B7AE5A45A539}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF6286A8-4875-4B7C-8FBF-FDC7BF366159}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF6286A8-4875-4B7C-8FBF-FDC7BF366159}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF6286A8-4875-4B7C-8FBF-FDC7BF366159}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF6286A8-4875-4B7C-8FBF-FDC7BF366159}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40120040-BAFF-465B-BBC6-9777F7E50C5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40120040-BAFF-465B-BBC6-9777F7E50C5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40120040-BAFF-465B-BBC6-9777F7E50C5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40120040-BAFF-465B-BBC6-9777F7E50C5E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
