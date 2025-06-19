@@ -1,52 +1,50 @@
 using MediatR;
-using ThreeTP.Payment.Application.Interfaces;
-using ThreeTP.Payment.Domain.Entities.Tenant;
-using ThreeTP.Payment.Application.DTOs.Responses.Terminals;
+using ThreeTP.Payment.Application.Interfaces; // For ITerminalService
+using ThreeTP.Payment.Domain.Entities.Tenant; // For Terminal entity
+using ThreeTP.Payment.Application.DTOs.Responses.Terminals; // For TerminalResponseDto
 using System.Threading;
 using System.Threading.Tasks;
-using ThreeTP.Payment.Domain.Exceptions; // Assuming you have a TenantNotFoundException
-using AutoMapper; // You'll need to add AutoMapper for mapping
+using AutoMapper; // For IMapper
+// TenantNotFoundException might be thrown by the service now, so direct check might not be needed here.
+// Using ThreeTP.Payment.Application.DTOs.Requests.Terminals; // Implicitly used by CreateTerminalCommand
 
 namespace ThreeTP.Payment.Application.Commands.Terminals
 {
     public class CreateTerminalCommandHandler : IRequestHandler<CreateTerminalCommand, TerminalResponseDto>
     {
-        private readonly ITerminalRepository _terminalRepository;
-        private readonly ITenantRepository _tenantRepository; // To verify TenantId
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly ITerminalService _terminalService;
         private readonly IMapper _mapper;
 
         public CreateTerminalCommandHandler(
-            ITerminalRepository terminalRepository,
-            ITenantRepository tenantRepository,
-            IUnitOfWork unitOfWork,
+            ITerminalService terminalService, // Changed dependencies
             IMapper mapper)
         {
-            _terminalRepository = terminalRepository;
-            _tenantRepository = tenantRepository;
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            _terminalService = terminalService ?? throw new ArgumentNullException(nameof(terminalService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task<TerminalResponseDto> Handle(CreateTerminalCommand request, CancellationToken cancellationToken)
         {
-            var tenantExists = await _tenantRepository.GetByIdAsync(request.TerminalRequest.TenantId);
-            if (tenantExists == null)
-            {
-                // Or a more specific exception like TenantNotFoundException(request.TerminalRequest.TenantId)
-                throw new TenantNotFoundException($"Tenant with ID {request.TerminalRequest.TenantId} not found.");
-            }
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            if (request.TerminalRequest == null) throw new ArgumentNullException(nameof(request.TerminalRequest), "TerminalRequest cannot be null.");
 
-            var terminal = new Terminal(
-                request.TerminalRequest.Name,
-                request.TerminalRequest.TenantId,
-                request.TerminalRequest.SecretKey // The repository will handle encryption
-            );
+            // The command carries CreateTerminalRequestDto.
+            // The service expects a Terminal domain entity.
+            // The TerminalMappingProfile maps CreateTerminalRequestDto to Terminal,
+            // using a constructor that takes (name, tenantId, secretKey).
+            // The 'secretKey' from DTO is passed to this constructor.
+            // The Terminal entity's constructor assigns this plain key to its SecretKeyEncrypted property (as a temporary holder).
+            // TerminalService then passes this Terminal entity to TerminalRepository.AddAsync,
+            // which encrypts the value in SecretKeyEncrypted.
+            var terminalToCreate = _mapper.Map<Terminal>(request.TerminalRequest);
 
-            await _terminalRepository.AddAsync(terminal);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            // The service will handle tenant existence check and actual creation logic.
+            // It will also handle any exceptions like TenantNotFoundException.
+            var createdTerminal = await _terminalService.CreateTerminalAsync(terminalToCreate);
 
-            return _mapper.Map<TerminalResponseDto>(terminal);
+            // The service returns a Terminal domain entity.
+            // This handler needs to map it to TerminalResponseDto.
+            return _mapper.Map<TerminalResponseDto>(createdTerminal);
         }
     }
 }

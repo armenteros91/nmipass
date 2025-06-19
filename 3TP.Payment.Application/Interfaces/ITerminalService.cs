@@ -1,21 +1,21 @@
 using ThreeTP.Payment.Domain.Entities.Tenant;
-using ThreeTP.Payment.Application.DTOs.Requests.Terminals; // Added
-using ThreeTP.Payment.Application.DTOs.Responses.Terminals; // Added
-using System; // Added
-using System.Collections.Generic; // Added
-using System.Threading.Tasks; // Added
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ThreeTP.Payment.Application.Interfaces
 {
     public interface ITerminalService
     {
-        Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId);
-        Task<Terminal?> FindBySecretNameAsync(string plainSecretName);
+        Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId); // Stays, implementation will change
+        Task<Terminal?> FindBySecretNameAsync(string plainSecretName); // Stays, implementation will change
 
-        // New methods
-        Task<TerminalResponseDto> CreateTerminalAsync(CreateTerminalRequestDto createRequest);
-        Task<TerminalResponseDto?> GetTerminalByIdAsync(Guid terminalId);
-        Task<IEnumerable<TerminalResponseDto>> GetTerminalsByTenantIdAsync(Guid tenantId);
-        Task<bool> UpdateTerminalAsync(Guid terminalId, UpdateTerminalRequestDto updateRequest);
+        // Refactored methods to align with TenantService pattern
+        Task<Terminal> CreateTerminalAsync(Terminal terminal); // Takes domain entity, returns domain entity
+        Task<Terminal?> GetTerminalByIdAsync(Guid terminalId); // Returns domain entity or null
+        Task<IEnumerable<Terminal>> GetTerminalsByTenantIdAsync(Guid tenantId); // Returns collection of domain entities
+        Task<bool> UpdateTerminalAsync(Terminal terminal); // Takes domain entity, returns bool for success
+        Task<bool> DeleteTerminalAsync(Guid terminalId); // Added for completeness, can be implemented later if needed
+        Task<bool> SetActiveStatusAsync(Guid terminalId, bool isActive); // Similar to TenantService
     }
 }
