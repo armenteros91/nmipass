@@ -9,18 +9,19 @@ namespace ThreeTP.Payment.Application.Queries.Terminals
 {
     public class GetTerminalByIdQueryHandler : IRequestHandler<GetTerminalByIdQuery, TerminalResponseDto?>
     {
-        private readonly ITerminalRepository _terminalRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public GetTerminalByIdQueryHandler(ITerminalRepository terminalRepository, IMapper mapper)
+        public GetTerminalByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _terminalRepository = terminalRepository;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
         public async Task<TerminalResponseDto?> Handle(GetTerminalByIdQuery request, CancellationToken cancellationToken)
         {
-            var terminal = await _terminalRepository.GetByIdAsync(request.TerminalId);
+            var terminalRepository = _unitOfWork.TerminalRepository;
+            var terminal = await terminalRepository.GetByIdAsync(request.TerminalId);
             return terminal == null ? null : _mapper.Map<TerminalResponseDto>(terminal);
         }
     }

@@ -17,25 +17,27 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
     [TestFixture]
     public class CreateTerminalCommandHandlerTests
     {
-        private Mock<ITerminalRepository> _mockTerminalRepository;
-        private Mock<ITenantRepository> _mockTenantRepository;
-        private Mock<IUnitOfWork> _mockUnitOfWork;
-        private Mock<IMapper> _mockMapper;
+        private Mock<ITerminalRepository> _terminalRepositoryMock;
+        private Mock<ITenantRepository> _tenantRepositoryMock;
+        private Mock<IUnitOfWork> _unitOfWorkMock;
+        private Mock<IMapper> _mapperMock;
         private CreateTerminalCommandHandler _handler;
 
         [SetUp]
         public void SetUp()
         {
-            _mockTerminalRepository = new Mock<ITerminalRepository>();
-            _mockTenantRepository = new Mock<ITenantRepository>();
-            _mockUnitOfWork = new Mock<IUnitOfWork>();
-            _mockMapper = new Mock<IMapper>();
+            _terminalRepositoryMock = new Mock<ITerminalRepository>();
+            _tenantRepositoryMock = new Mock<ITenantRepository>();
+            _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _mapperMock = new Mock<IMapper>();
+
+            // Setup IUnitOfWork to return mocked repositories
+            _unitOfWorkMock.Setup(uow => uow.TenantRepository).Returns(_tenantRepositoryMock.Object);
+            _unitOfWorkMock.Setup(uow => uow.TerminalRepository).Returns(_terminalRepositoryMock.Object);
 
             _handler = new CreateTerminalCommandHandler(
-                _mockTerminalRepository.Object,
-                _mockTenantRepository.Object,
-                _mockUnitOfWork.Object,
-                _mockMapper.Object
+                _unitOfWorkMock.Object,
+                _mapperMock.Object
             );
         }
 
@@ -53,14 +55,14 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             var command = new CreateTerminalCommand(createTerminalRequestDto);
 
             var mockTenant = new Tenant("Test Tenant", "contact@example.com", "SomeApiKey"); // Assuming Tenant constructor
-            _mockTenantRepository.Setup(r => r.GetByIdAsync(tenantId))
+            _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId))
                 .ReturnsAsync(mockTenant);
 
-            _mockTerminalRepository.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
+            _terminalRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
                 .Returns(Task.CompletedTask); // Or .Callback<Terminal>(t => { /* set t.TerminalId if needed */ });
 
 
-            _mockUnitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            _unitOfWorkMock.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(1);
 
             var expectedTerminalResponseDto = new TerminalResponseDto
@@ -71,7 +73,7 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                 IsActive = true,
                 CreatedDate = DateTime.UtcNow
             };
-            _mockMapper.Setup(m => m.Map<TerminalResponseDto>(It.IsAny<Terminal>()))
+            _mapperMock.Setup(m => m.Map<TerminalResponseDto>(It.IsAny<Terminal>()))
                 .Returns((Terminal src) => new TerminalResponseDto { // More robust mapping for test
                     TerminalId = src.TerminalId, // Use the actual TerminalId from the created Terminal
                     Name = src.Name,
@@ -88,18 +90,18 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             result.Name.Should().Be(createTerminalRequestDto.Name);
             result.TenantId.Should().Be(createTerminalRequestDto.TenantId);
             // TerminalId and CreatedDate are generated, so exact match for those might be tricky
-            // unless captured from the Terminal instance passed to _mockMapper.Setup.
-            // The updated _mockMapper.Setup above helps make this more consistent.
+            // unless captured from the Terminal instance passed to _mapperMock.Setup.
+            // The updated _mapperMock.Setup above helps make this more consistent.
             result.TerminalId.Should().NotBeEmpty();
             result.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
 
 
-            _mockTerminalRepository.Verify(r => r.AddAsync(It.Is<Terminal>(t =>
+            _terminalRepositoryMock.Verify(r => r.AddAsync(It.Is<Terminal>(t =>
                 t.Name == createTerminalRequestDto.Name &&
                 t.TenantId == createTerminalRequestDto.TenantId &&
                 t.SecretKeyEncrypted == createTerminalRequestDto.SecretKey
             )), Times.Once);
-            _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -115,7 +117,7 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             };
             var command = new CreateTerminalCommand(createTerminalRequestDto);
 
-            _mockTenantRepository.Setup(r => r.GetByIdAsync(tenantId))
+            _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId))
                 .ReturnsAsync((Tenant)null); // Tenant not found
 
             // Act & Assert
@@ -124,8 +126,8 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             act.Should().ThrowAsync<TenantNotFoundException>()
                 .WithMessage($"Tenant with ID {tenantId} not found.");
 
-            _mockTerminalRepository.Verify(r => r.AddAsync(It.IsAny<Terminal>()), Times.Never);
-            _mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            _terminalRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Terminal>()), Times.Never);
+            _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

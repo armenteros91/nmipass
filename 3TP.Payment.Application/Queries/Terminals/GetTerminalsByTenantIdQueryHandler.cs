@@ -10,18 +10,19 @@ namespace ThreeTP.Payment.Application.Queries.Terminals
 {
     public class GetTerminalsByTenantIdQueryHandler : IRequestHandler<GetTerminalsByTenantIdQuery, IEnumerable<TerminalResponseDto>>
     {
-        private readonly ITerminalRepository _terminalRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public GetTerminalsByTenantIdQueryHandler(ITerminalRepository terminalRepository, IMapper mapper)
+        public GetTerminalsByTenantIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _terminalRepository = terminalRepository;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
         public async Task<IEnumerable<TerminalResponseDto>> Handle(GetTerminalsByTenantIdQuery request, CancellationToken cancellationToken)
         {
-            var terminals = await _terminalRepository.GetByTenantIdAsync(request.TenantId);
+            var terminalRepository = _unitOfWork.TerminalRepository;
+            var terminals = await terminalRepository.GetByTenantIdAsync(request.TenantId);
             return _mapper.Map<IEnumerable<TerminalResponseDto>>(terminals);
         }
     }

@@ -8,18 +8,17 @@ namespace ThreeTP.Payment.Application.Commands.Terminals
 {
     public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalCommand, bool>
     {
-        private readonly ITerminalRepository _terminalRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public UpdateTerminalCommandHandler(ITerminalRepository terminalRepository, IUnitOfWork unitOfWork)
+        public UpdateTerminalCommandHandler(IUnitOfWork unitOfWork)
         {
-            _terminalRepository = terminalRepository;
             _unitOfWork = unitOfWork;
         }
 
         public async Task<bool> Handle(UpdateTerminalCommand request, CancellationToken cancellationToken)
         {
-            var terminal = await _terminalRepository.GetByIdAsync(request.TerminalId);
+            var terminalRepository = _unitOfWork.TerminalRepository;
+            var terminal = await terminalRepository.GetByIdAsync(request.TerminalId);
 
             if (terminal == null)
             {
@@ -46,7 +45,7 @@ namespace ThreeTP.Payment.Application.Commands.Terminals
 
             if (updated)
             {
-                _terminalRepository.Update(terminal); // Assuming a generic Update method from IGenericRepository
+                terminalRepository.Update(terminal); // Assuming a generic Update method from IGenericRepository
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
