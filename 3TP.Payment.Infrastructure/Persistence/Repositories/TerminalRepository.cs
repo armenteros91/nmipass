@@ -102,5 +102,9 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             return await _dbContext.Set<Terminal>()
                 .FirstOrDefaultAsync(t => t.SecretKeyHash == hash);
         }
+        public void Update(Terminal terminal)
+        {
+            _dbContext.Update(terminal); // track for save entity
+        }
     }
 }

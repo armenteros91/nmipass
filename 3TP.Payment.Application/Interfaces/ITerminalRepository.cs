@@ -10,6 +10,7 @@ namespace ThreeTP.Payment.Application.Interfaces
         Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId);
         Task UpdateSecretKeyAsync(Guid terminalId, string newPlainSecretKey);
         Task<Terminal?> FindBySecretNameAsync(string plainSecretName);
+        void Update(Terminal terminal);
     }
 
 

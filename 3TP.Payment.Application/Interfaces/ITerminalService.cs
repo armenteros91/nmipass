@@ -1,4 +1,9 @@
-﻿using ThreeTP.Payment.Domain.Entities.Tenant;
+using ThreeTP.Payment.Domain.Entities.Tenant;
+using ThreeTP.Payment.Application.DTOs.Requests.Terminals; // Added
+using ThreeTP.Payment.Application.DTOs.Responses.Terminals; // Added
+using System; // Added
+using System.Collections.Generic; // Added
+using System.Threading.Tasks; // Added
 
 namespace ThreeTP.Payment.Application.Interfaces
 {
@@ -6,5 +11,11 @@ namespace ThreeTP.Payment.Application.Interfaces
     {
         Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId);
         Task<Terminal?> FindBySecretNameAsync(string plainSecretName);
+
+        // New methods
+        Task<TerminalResponseDto> CreateTerminalAsync(CreateTerminalRequestDto createRequest);
+        Task<TerminalResponseDto?> GetTerminalByIdAsync(Guid terminalId);
+        Task<IEnumerable<TerminalResponseDto>> GetTerminalsByTenantIdAsync(Guid tenantId);
+        Task<bool> UpdateTerminalAsync(Guid terminalId, UpdateTerminalRequestDto updateRequest);
     }
 }

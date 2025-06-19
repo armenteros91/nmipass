@@ -1,7 +1,8 @@
+using AutoMapper; // Added
 using FluentValidation;
 using MediatR;
 using ThreeTP.Payment.Application.Behaviors;
-using ThreeTP.Payment.Application.Commands.AwsSecrets;
+using ThreeTP.Payment.Application.Commands.AwsSecrets; // For CreateSecretCommandHandler
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Application.Services;
 using ThreeTP.Payment.Infrastructure.Events;
@@ -24,21 +25,31 @@ public static class ApplicationInstaller
         // 1. Configure MediatR and register handlers from the Application assembly
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly));
+        // This line ensures MediatR scans the assembly containing CreateSecretCommandHandler.
+        // It might be redundant if Application.AssemblyReference.Assembly is the same one,
+        // but keeping it preserves original behavior.
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssemblyContaining<CreateSecretCommandHandler>());
 
-        // 2. Configure FluentValidation and register validators from the Application assembly
+        // 2. Configure AutoMapper and register profiles from the Application assembly
+        services.AddAutoMapper(typeof(Application.AssemblyReference).Assembly); // Added
+
+        // 3. Configure FluentValidation and register validators from the Application assembly
         services.AddValidatorsFromAssembly(typeof(Application.AssemblyReference).Assembly);
         
-        // 3. Register pipeline behaviors
+        // 4. Register pipeline behaviors
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         // Note: TransactionBehavior<,> Comentado  x si se llegara a utilizar 
         // services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
 
-        // 4. Register domain event dispatcher
+        // 5. Register domain event dispatcher
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         
-        services.AddScoped<IPaymentService,PaymentService>();
+        // 6. Register Application Services
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<ITenantService, TenantService>(); // Added based on existence
+        services.AddScoped<ITerminalService, TerminalService>(); // Added
+        services.AddScoped<IAwsSecretManagerService, AwsSecretManagerService>(); // Added based on existence
         
         return services;
     }

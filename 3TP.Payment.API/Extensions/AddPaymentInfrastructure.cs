@@ -187,7 +187,7 @@ public class DatabaseMigrationService : IHostedService
         try
         {
             _logger.LogInformation("Applying database migrations for NmiDbContext...");
-            await context.Database.MigrateAsync(cancellationToken);
+           // await context.Database.MigrateAsync(cancellationToken);
             _logger.LogInformation("Database migrations applied successfully.");
         }
         catch (Exception ex)
