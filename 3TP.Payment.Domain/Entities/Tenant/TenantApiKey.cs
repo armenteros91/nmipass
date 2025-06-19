@@ -2,7 +2,7 @@ using ThreeTP.Payment.Domain.Commons;
 
 namespace ThreeTP.Payment.Domain.Entities.Tenant;
 
-public abstract class TenantApiKey : BaseEntity
+public class TenantApiKey : BaseEntity
 {
     public Guid TenantApikeyId { get; set; }
     

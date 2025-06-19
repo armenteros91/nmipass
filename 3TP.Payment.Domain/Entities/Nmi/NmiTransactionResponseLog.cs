@@ -1,6 +1,8 @@
+using ThreeTP.Payment.Domain.Commons;
+
 namespace ThreeTP.Payment.Domain.Entities.Nmi;
 
-public class NmiTransactionResponseLog
+public class NmiTransactionResponseLog :BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid RequestId { get; set; }

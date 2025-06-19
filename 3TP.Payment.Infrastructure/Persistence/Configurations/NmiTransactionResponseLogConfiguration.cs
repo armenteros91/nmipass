@@ -18,7 +18,8 @@ public class NmiTransactionResponseLogConfiguration : IEntityTypeConfiguration<N
         builder.Property(x => x.ReceivedAt);
 
         builder.HasOne(x => x.Request)
-            .WithMany()
-            .HasForeignKey(x => x.RequestId);
+            .WithMany(x => x.Responses)
+            .HasForeignKey(x => x.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

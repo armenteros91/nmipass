@@ -32,24 +32,24 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasDefaultValue(true);
 
-        builder.Property(e => e.CreatedDate)
-            .IsRequired()
-            .HasDefaultValueSql("CONVERT(DATETIME2,DATEADD(HOUR, -5,GETDATE()),120)");
-
-        builder.Property(e => e.CreatedBy)
-            .HasMaxLength(25)
-            .HasDefaultValueSql("USER_NAME()");
-
-        builder.Property(e => e.ModifiedDate)
-            .IsRequired(false);
-
-        builder.Property(e => e.ModifiedBy)
-            .HasMaxLength(50)
-            .IsRequired(false)
-            .HasDefaultValueSql("USER_NAME()");
-
-        builder.Property(e => e.TimeStamp)
-            .IsRowVersion();
+        // builder.Property(e => e.CreatedDate)
+        //     .IsRequired()
+        //     .HasDefaultValueSql("CONVERT(DATETIME2,DATEADD(HOUR, -5,GETDATE()),120)");
+        //
+        // builder.Property(e => e.CreatedBy)
+        //     .HasMaxLength(50)
+        //     .HasDefaultValueSql("USER_NAME()");
+        //
+        // builder.Property(e => e.ModifiedDate)
+        //     .IsRequired(false);
+        //
+        // builder.Property(e => e.ModifiedBy)
+        //     .HasMaxLength(50)
+        //     .IsRequired(false)
+        //     .HasDefaultValueSql("USER_NAME()");
+        //
+        // builder.Property(e => e.TimeStamp)
+        //     .IsRowVersion();
 
         // Relación 1:N
         builder.HasMany(t => t.Terminals)

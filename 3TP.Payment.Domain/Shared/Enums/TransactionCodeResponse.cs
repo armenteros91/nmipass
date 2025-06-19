@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ThreeTP.Payment.Domain.Shared.Enums
+﻿namespace ThreeTP.Payment.Domain.Shared.Enums
 {
     public enum TransactionCodeResponse
     {

@@ -9,6 +9,6 @@ public interface ITenantRepository : IGenericRepository<Tenant>
     
     Task<bool> CompanyCodeExistsAsync(string companyCode);
     
-    new Task AddAsync(Tenant tenant);
+    Task AddAsync(Tenant tenant);
     void Update(Tenant tenant);
 }

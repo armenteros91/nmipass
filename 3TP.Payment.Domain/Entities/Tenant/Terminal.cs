@@ -12,7 +12,7 @@ namespace ThreeTP.Payment.Domain.Entities.Tenant
         public Tenant Tenant { get; set; }
 
         /// <summary>
-        /// hash desencriptado como indice , para optimizar el rendimiento de la consulta en teminales 
+        /// Hash desencriptado como índice, para optimizar el rendimiento de la consulta en terminals 
         /// </summary>
         public string SecretKeyHash { get; set; } = null!;
 

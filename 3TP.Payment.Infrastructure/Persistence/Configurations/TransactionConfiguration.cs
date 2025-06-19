@@ -38,29 +38,29 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transactions>
         //   .HasColumnName("AuthCode")
         //   .IsRequired();
 
-        builder.Property(e => e.response_code)
+        builder.Property(e => e.ResponseCode)
          .HasColumnName("ResponseCode")
          .IsRequired()
          .HasConversion<int>();
 
-        builder.Property(e => e.CreatedDate)
-            .IsRequired()
-            .HasDefaultValueSql("CONVERT(DATETIME2,DATEADD(HOUR, -5,GETDATE()),120)");
-            
-        builder.Property(e => e.CreatedBy)
-            .HasMaxLength(25)
-            .HasDefaultValueSql("USER_NAME()");
-            
-        builder.Property(e => e.ModifiedDate)
-            .IsRequired(false);
-            
-        builder.Property(e => e.ModifiedBy)
-            .HasMaxLength(25)
-            .IsRequired(false);
-            
-        builder.Property(e => e.TimeStamp)
-            .IsRowVersion();
-            
+        // builder.Property(e => e.CreatedDate)
+        //     .IsRequired()
+        //     .HasDefaultValueSql("CONVERT(DATETIME2,DATEADD(HOUR, -5,GETDATE()),120)");
+        //     
+        // builder.Property(e => e.CreatedBy)
+        //     .HasMaxLength(100)
+        //     .HasDefaultValueSql("USER_NAME()");
+        //     
+        // builder.Property(e => e.ModifiedDate)
+        //     .IsRequired(false);
+        //     
+        // builder.Property(e => e.ModifiedBy)
+        //     .HasMaxLength(100)
+        //     .IsRequired(false);
+        //     
+        // builder.Property(e => e.TimeStamp)
+        //     .IsRowVersion();
+        //     
         builder.HasOne(e => e.Tenant)
             .WithMany()
             .HasForeignKey(e => e.TenantId);

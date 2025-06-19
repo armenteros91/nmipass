@@ -1,7 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ThreeTP.Payment.Application.Commands.Tenants;
 using ThreeTP.Payment.Application.DTOs.Requests.Tenants;
-using ThreeTP.Payment.Application.Services;
-using ThreeTP.Payment.Domain.Entities.Tenant;
+using ThreeTP.Payment.Application.Queries.Tenants;
+using ThreeTP.Payment.Domain.Entities.Tenant; // Assuming Tenant entity is returned by some queries/commands
 
 namespace ThreeTP.Payment.API.Controller;
 
@@ -9,20 +11,20 @@ namespace ThreeTP.Payment.API.Controller;
 [Route("api/tenants")]
 public class TenantsController : ControllerBase
 {
-    private readonly TenantService _tenantService;
+    private readonly IMediator _mediator;
 
-    public TenantsController(TenantService tenantService)
+    public TenantsController(IMediator mediator)
     {
-        _tenantService = tenantService;
+        _mediator = mediator;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll() =>
-        Ok(await _tenantService.GetAllTenantsAsync());
+        Ok(await _mediator.Send(new GetAllTenantsQuery()));
 
     [HttpGet("{tenantId:guid}")]
     public async Task<IActionResult> GetById(Guid tenantId) =>
-        Ok(await _tenantService.GetTenantByIdAsync(tenantId));
+        Ok(await _mediator.Send(new GetTenantByIdQuery(tenantId)));
 
     /// <summary>
     /// Creates a new tenant.
@@ -30,9 +32,8 @@ public class TenantsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTenantRequest request)
     {
-        var tenant = new Tenant(request.CompanyName, request.CompanyCode);
-        await _tenantService.CreateTenantAsync(tenant);
-        return CreatedAtAction(nameof(GetById), new { tenantId = tenant.TenantId }, tenant);
+        var tenant = await _mediator.Send(new CreateTenantCommand(request.CompanyName, request.CompanyCode));
+        return CreatedAtAction(nameof(GetById), new { tenantId = tenant.TenantId }, tenant); // Assuming tenant.Id is the ID
     }
 
     /// <summary>
@@ -41,11 +42,7 @@ public class TenantsController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateTenantRequest request)
     {
-        var tenant = new Tenant(request.CompanyName, request.CompanyCode)
-        {
-            TenantId = request.TenantId
-        };
-        await _tenantService.UpdateTenantAsync(tenant);
+        await _mediator.Send(new UpdateTenantCommand(request.TenantId, request.CompanyName, request.CompanyCode));
         return NoContent();
     }
     /// <summary>
@@ -54,7 +51,7 @@ public class TenantsController : ControllerBase
     [HttpPut("{tenantId:guid}/status")]
     public async Task<IActionResult> SetStatus(Guid tenantId, [FromBody] SetStatusRequest req)
     {
-        await _tenantService.SetActiveStatusAsync(tenantId, req.IsActive);
+        await _mediator.Send(new SetTenantStatusCommand(tenantId, req.IsActive));
         return NoContent();
     }
 
@@ -64,7 +61,7 @@ public class TenantsController : ControllerBase
     [HttpGet("exists/{companyCode}")]
     public async Task<IActionResult> Exists(string companyCode)
     {
-        var exists = await _tenantService.CompanyCodeExistsAsync(companyCode);
+        var exists = await _mediator.Send(new TenantExistsQuery(companyCode));
         return Ok(new { exists });
     }
 
@@ -74,7 +71,7 @@ public class TenantsController : ControllerBase
     [HttpGet("by-apikey/{apiKey}")]
     public async Task<IActionResult> GetByApiKey(string apiKey)
     {
-        var tenant = await _tenantService.ValidateByApiKeyAsync(apiKey);
+        var tenant = await _mediator.Send(new GetTenantByApiKeyQuery(apiKey));
         return tenant is not null ? Ok(tenant) : NotFound();
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ThreeTP.Payment.Domain.Commons;
 using ThreeTP.Payment.Domain.Entities.Nmi;
 using ThreeTP.Payment.Domain.Entities.Payments;
 using ThreeTP.Payment.Domain.Entities.Tenant;
@@ -24,14 +25,54 @@ public class NmiDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<NmiTransactionRequestLog>().ToTable("NmiRequestLogs", "Payment");
-        modelBuilder.Entity<NmiTransactionResponseLog>().ToTable("NmiResponseLogs", "Payment");
+        // NMI (Logging schema)
+        modelBuilder.Entity<NmiTransactionRequestLog>().ToTable("NmiRequestLogs", "Logging");
+        modelBuilder.Entity<NmiTransactionResponseLog>().ToTable("NmiResponseLogs", "Logging");
+
+        // Tenant schema
         modelBuilder.Entity<Tenant>().ToTable(nameof(Tenant), "Tenant");
         modelBuilder.Entity<TenantApiKey>().ToTable("ApiKeys", "Tenant");
+        modelBuilder.Entity<Terminal>().ToTable(nameof(Terminal), "Tenant");
 
+        // Payment schema
+        modelBuilder.Entity<Transactions>().ToTable(nameof(Transactions), "Payment");
+        modelBuilder.Entity<TransactionResponse>().ToTable(nameof(TransactionResponse), "Payment");
+        modelBuilder.Entity<TransactionType>().ToTable(nameof(TransactionType), "Payment");
+
+
+        // Aplica configuración base a todas las entidades que heredan de BaseEntity
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                var builder = modelBuilder.Entity(entityType.ClrType);
+
+                builder.Property(nameof(BaseEntity.CreatedDate))
+                    .IsRequired()
+                    .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
+
+                builder.Property(nameof(BaseEntity.CreatedBy))
+                    .HasMaxLength(25)
+                    .HasDefaultValueSql("USER_NAME()");
+
+                builder.Property(nameof(BaseEntity.ModifiedBy))
+                    .HasMaxLength(25);
+
+                builder.Property(nameof(BaseEntity.TimeStamp))
+                    .IsRowVersion();
+            }
+        }
+
+        // Apply entity configurations
         modelBuilder.ApplyConfiguration(new TenantConfiguration());
-        modelBuilder.ApplyConfiguration(new ApiKeyConfiguration());
+        modelBuilder.ApplyConfiguration(new TerminalConfiguration());
+        modelBuilder.ApplyConfiguration(new TenantApiKeyConfiguration());
+
         modelBuilder.ApplyConfiguration(new TransactionConfiguration());
         modelBuilder.ApplyConfiguration(new TransactionTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new TransactionResponseConfiguration());
+
+        modelBuilder.ApplyConfiguration(new NmiTransactionRequestLogConfiguration());
+        modelBuilder.ApplyConfiguration(new NmiTransactionResponseLogConfiguration());
     }
 }

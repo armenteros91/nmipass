@@ -20,17 +20,22 @@ public class TerminalConfiguration : IEntityTypeConfiguration<Terminal>
             .IsRequired()
             .HasDefaultValue(true);
 
-        builder.Property(tt => tt.CreatedDate)
-            .IsRequired()
-            .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
+        // builder.Property(tt => tt.CreatedDate)
+        //     .IsRequired()
+        //     .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
+        //
+        // builder.Property(tt => tt.CreatedBy)
+        //     .HasMaxLength(50)
+        //     .HasDefaultValueSql("USER_NAME()");
+        //
+        // builder.Property(tt => tt.TimeStamp)
+        //     .IsRowVersion();
 
-        builder.Property(tt => tt.CreatedBy)
-            .HasMaxLength(25)
-            .HasDefaultValueSql("USER_NAME()");
-
-        builder.Property(tt => tt.TimeStamp)
-            .IsRowVersion();
-
+        builder.HasOne(t => t.Tenant)
+            .WithMany(tn => tn.Terminals) // Colección en Tenant
+            .HasForeignKey(t => t.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
         // Índice por TenantId para acelerar búsquedas
         builder.HasIndex(tt => tt.TenantId)
             .HasDatabaseName("IDX_TblTerminalTenants_TenantId");

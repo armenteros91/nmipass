@@ -14,9 +14,10 @@ public class Tenant : BaseEntityWithEvents
 
 
     private readonly List<TenantApiKey> _apiKeys = [];
-    public IReadOnlyCollection<TenantApiKey> ApiKeys => _apiKeys.AsReadOnly();
+    //public IReadOnlyCollection<TenantApiKey> ApiKeys => _apiKeys.AsReadOnly();
+    public ICollection<TenantApiKey> ApiKeys { get; set; } = new List<TenantApiKey>();
 
-    public ICollection<Terminal> Terminals { get; private set; } = new List<Terminal>();
+    public ICollection<Terminal> Terminals { get; set; } = new List<Terminal>();
 
     protected Tenant()
     {

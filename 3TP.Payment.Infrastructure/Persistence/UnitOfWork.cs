@@ -26,10 +26,10 @@ public class UnitOfWork : IUnitOfWork, IAsyncDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitOfWork"/> class.
     /// </summary>
+    /// <param name="contextFactory"></param>
     /// <param name="dispatcher">The domain event dispatcher for handling domain events.</param>
     /// <param name="logger">The logger for logging Unit of Work operations.</param>
     /// <param name="loggerFactory">The factory to create loggers for repositories.</param>
-    /// <param name="sharedContext"></param>
     /// <param name="repositoryFactory"></param>
     /// <exception cref="ArgumentNullException">Thrown when any of the parameters is null.</exception>
     public UnitOfWork(

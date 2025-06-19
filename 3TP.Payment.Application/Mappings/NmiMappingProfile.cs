@@ -5,7 +5,6 @@ using ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
 using ThreeTP.Payment.Application.Helpers;
 using ThreeTP.Payment.Domain.Entities.Nmi;
 using ThreeTP.Payment.Domain.Entities.Payments;
-using ThreeTP.Payment.Domain.Shared.Enums;
 
 namespace ThreeTP.Payment.Application.Mappings;
 

@@ -1,5 +1,3 @@
-using Amazon;
-using Amazon.Runtime;
 using Serilog;
 using ThreeTP.Payment.API.Installers;
 using ThreeTP.Payment.API.Middleware;

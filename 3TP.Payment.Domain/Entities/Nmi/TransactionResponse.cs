@@ -6,7 +6,7 @@ namespace ThreeTP.Payment.Domain.Entities.Nmi;
 public class TransactionResponse
 {
     public Guid TransaccionResponseId { get; set; }
-    public int Id { get; set; }// valor de respuesta NMI
+    public int Id { get; set; } // valor de respuesta NMI
 
     // Standard fields
     public string? Response { get; set; }
