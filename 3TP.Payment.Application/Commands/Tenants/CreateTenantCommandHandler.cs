@@ -1,12 +1,10 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using ThreeTP.Payment.Application.Commands.Tenants;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using ThreeTP.Payment.Domain.Events;
-using ThreeTP.Payment.Domain.Exceptions;
 
-namespace ThreeTP.Payment.Application.Handlers.Tenants
+namespace ThreeTP.Payment.Application.Commands.Tenants
 {
     public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, Tenant>
     {
@@ -33,7 +31,9 @@ namespace ThreeTP.Payment.Application.Handlers.Tenants
             try
             {
                 await _unitOfWork.TenantRepository.AddAsync(tenant);
-                //tenant.AddDomainEvent(new TenantActivatedEvent(tenant));
+                
+                tenant.AddDomainEvent(TenantActivatedEvent.Create(tenant));
+                
                 await _unitOfWork.CommitAsync(cancellationToken);
 
                 _logger.LogInformation("Tenant {CompanyName} created successfully with Id {TenantId}", tenant.CompanyName, tenant.TenantId);
