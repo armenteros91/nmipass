@@ -14,23 +14,23 @@ namespace ThreeTP.Payment.Application.Services
 {
     public class TerminalService : ITerminalService
     {
-        private readonly ITerminalRepository _terminalRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IEncryptionService _encryptionService;
         private readonly IMediator _mediator; // Added
 
         public TerminalService(
-            ITerminalRepository terminalRepository,
+            IUnitOfWork unitOfWork,
             IEncryptionService encryptionService,
             IMediator mediator) // Added mediator
         {
-            _terminalRepository = terminalRepository;
+            _unitOfWork = unitOfWork;
             _encryptionService = encryptionService;
             _mediator = mediator; // Added
         }
 
         public async Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId)
         {
-            var terminal = await _terminalRepository.GetByIdAsync(terminalId);
+            var terminal = await _unitOfWork.TerminalRepository.GetByIdAsync(terminalId);
             return terminal != null
                 ? _encryptionService.Decrypt(terminal.SecretKeyEncrypted)
                 : null;
@@ -41,7 +41,7 @@ namespace ThreeTP.Payment.Application.Services
             // This method in the repository seems to directly use the plainSecretName to find by hash.
             // If this is intended to use an encrypted version or another logic, it should be adjusted.
             // For now, keeping it as is, assuming the repository handles it correctly.
-            return await _terminalRepository.FindBySecretNameAsync(plainSecretName);
+            return await _unitOfWork.TerminalRepository.FindBySecretNameAsync(plainSecretName);
         }
 
         // New method implementations

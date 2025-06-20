@@ -26,6 +26,7 @@ namespace ThreeTP.Payment.Domain.Entities.Tenant
             TerminalId = Guid.NewGuid();
             Name = name ?? throw new ArgumentNullException(nameof(name));
             TenantId = tenantId;
+            IsActive = true;
             CreatedDate = DateTime.UtcNow;
             SecretKeyEncrypted = secretKey;
         }
