@@ -197,6 +197,17 @@ public static class Utils
         var hashBytes = sha.ComputeHash(bytes);
         return Convert.ToHexString(hashBytes); // .NET 5+ => uppercase
     }
+
+    /// <summary>
+    /// Generates a new API key.
+    /// </summary>
+    /// <returns>A string representing the new API key.</returns>
+    public static string GenerateApiKey()
+    {
+        byte[] apiKeyBytes = new byte[32];
+        RandomNumberGenerator.Fill(apiKeyBytes);
+        return Convert.ToBase64String(apiKeyBytes);
+    }
 }
 
 /// <summary>

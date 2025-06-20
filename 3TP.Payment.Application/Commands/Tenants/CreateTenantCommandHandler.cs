@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using ThreeTP.Payment.Domain.Events;
+using ThreeTP.Payment.Application.Helpers;
 
 namespace ThreeTP.Payment.Application.Commands.Tenants
 {
@@ -31,12 +32,17 @@ namespace ThreeTP.Payment.Application.Commands.Tenants
             try
             {
                 await _unitOfWork.TenantRepository.AddAsync(tenant);
-                
+
+                // Generate API Key and add it to the tenant
+                var apiKey = Utils.GenerateApiKey();
+                var tenantApiKey = new TenantApiKey(apiKey, tenant.TenantId); // Assuming TenantApiKey constructor
+                tenant.AddApiKey(tenantApiKey); // Assuming AddApiKey method exists on Tenant
+
                 tenant.AddDomainEvent(TenantActivatedEvent.Create(tenant));
                 
                 await _unitOfWork.CommitAsync(cancellationToken);
 
-                _logger.LogInformation("Tenant {CompanyName} created successfully with Id {TenantId}", tenant.CompanyName, tenant.TenantId);
+                _logger.LogInformation("Tenant {CompanyName} created successfully with Id {TenantId} and APIKey {ApiKey}", tenant.CompanyName, tenant.TenantId, apiKey);
                 return tenant;
             }
             catch (Exception ex)

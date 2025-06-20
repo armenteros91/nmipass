@@ -78,7 +78,7 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
 
             _mapperMock.Setup(m => m.Map<TerminalResponseDto>(It.IsAny<Terminal>()))
                 .Returns((Terminal src) => new TerminalResponseDto {
-                    TerminalId = src.Id,
+                    TerminalId = src.TerminalId, // Changed from Id to TerminalId
                     Name = src.Name,
                     TenantId = src.TenantId,
                     IsActive = true, // Assuming default
@@ -93,13 +93,13 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             result.Name.Should().Be(createTerminalRequestDto.Name);
             result.TenantId.Should().Be(createTerminalRequestDto.TenantId);
             result.TerminalId.Should().NotBeEmpty();
-            result.TerminalId.Should().Be(capturedTerminal.Id);
+            result.TerminalId.Should().Be(capturedTerminal.TerminalId); // Changed from Id to TerminalId
 
 
             _terminalRepositoryMock.Verify(r => r.AddAsync(It.Is<Terminal>(t =>
                 t.Name == createTerminalRequestDto.Name &&
                 t.TenantId == createTerminalRequestDto.TenantId &&
-                t.SecretKey == createTerminalRequestDto.SecretKey // SecretKey is not encrypted in domain entity anymore
+                t.SecretKeyEncrypted == createTerminalRequestDto.SecretKey // Changed from SecretKey to SecretKeyEncrypted
             )), Times.Once);
             // _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once); // This is no longer called directly
             _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(It.IsAny<CreateSecretCommand>(), It.IsAny<CancellationToken>()), Times.Once); // Verify secret creation was called
@@ -146,7 +146,7 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(tenant);
 
             Terminal capturedTerminal = null;
-            _mockTerminalRepository.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
+            _terminalRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Terminal>())) // Changed from _mockTerminalRepository
                 .Callback<Terminal>(t => capturedTerminal = t) // Capture the terminal instance
                 .Returns(Task.CompletedTask);
 
@@ -155,30 +155,30 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                 .ReturnsAsync(new CreateSecretResponse { ARN = "arn:aws:secretsmanager:us-east-1:123456789012:secret:MySecret-123456" });
 
             _mapperMock.Setup(m => m.Map<TerminalResponseDto>(It.IsAny<Terminal>()))
-                .Returns((Terminal t) => new TerminalResponseDto { TerminalId = t.Id, Name = t.Name, TenantId = t.TenantId });
+                .Returns((Terminal t) => new TerminalResponseDto { TerminalId = t.TerminalId, Name = t.Name, TenantId = t.TenantId }); // Changed t.Id to t.TerminalId
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            Assert.IsNotNull(capturedTerminal, "Terminal should have been captured by AddAsync callback.");
-            Assert.That(result.TerminalId, Is.EqualTo(capturedTerminal.Id));
-            Assert.That(result.TenantId, Is.EqualTo(tenantId));
-            Assert.That(result.Name, Is.EqualTo(terminalName));
+            capturedTerminal.Should().NotBeNull("Terminal should have been captured by AddAsync callback."); // FluentAssertions
+            result.TerminalId.Should().Be(capturedTerminal.TerminalId); // FluentAssertions, changed capturedTerminal.Id
+            result.TenantId.Should().Be(tenantId); // FluentAssertions
+            result.Name.Should().Be(terminalName); // FluentAssertions
 
             _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(
                 It.Is<CreateSecretCommand>(c =>
-                    c.Name == $"tenant/{tenantId}/terminal/{capturedTerminal.Id}/secretkey" &&
+                    c.Name == $"tenant/{tenantId}/terminal/{capturedTerminal.TerminalId}/secretkey" && // Changed capturedTerminal.Id
                     c.SecretString == secretKey &&
-                    c.Description == $"Secret key for terminal {capturedTerminal.Id} of tenant {tenantId}" &&
-                    c.TerminalId == capturedTerminal.Id
+                    c.Description == $"Secret key for terminal {capturedTerminal.TerminalId} of tenant {tenantId}" && // Changed capturedTerminal.Id
+                    c.TerminalId == capturedTerminal.TerminalId // Changed capturedTerminal.Id
                 ),
                 It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
         [Test]
-        public void Handle_WhenAwsSecretCreationFails_ShouldThrowException()
+        public async Task Handle_WhenAwsSecretCreationFails_ShouldThrowException() // Added async Task
         {
             // Arrange
             var tenantId = Guid.NewGuid();
@@ -186,10 +186,10 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             var command = new CreateTerminalCommand(requestDto);
             var expectedException = new AmazonSecretsManagerException("AWS fake error");
 
-            _mockTenantRepository.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(new Tenant("Test Tenant", "alias"));
+            _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(new Tenant("Test Tenant", "alias")); // Changed from _mockTenantRepository
 
             Terminal capturedTerminal = null;
-            _mockTerminalRepository.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
+            _terminalRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Terminal>())) // Changed from _mockTerminalRepository
                 .Callback<Terminal>(t => capturedTerminal = t)
                 .Returns(Task.CompletedTask);
 
@@ -198,11 +198,11 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                 .ThrowsAsync(expectedException);
 
             // Act & Assert
-            var actualException = Assert.ThrowsAsync<AmazonSecretsManagerException>(async () => await _handler.Handle(command, CancellationToken.None));
-            Assert.That(actualException, Is.EqualTo(expectedException));
+            Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None); // FluentAssertions style
+            (await act.Should().ThrowAsync<AmazonSecretsManagerException>()).Which.Should().Be(expectedException); // FluentAssertions style
 
             _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(
-                It.Is<CreateSecretCommand>(c => c.TerminalId == capturedTerminal.Id ), // Verify with captured terminal Id
+                It.Is<CreateSecretCommand>(c => c.TerminalId == capturedTerminal.TerminalId ), // Verify with captured terminal Id, Changed from Id to TerminalId
                 It.IsAny<CancellationToken>()),
                 Times.Once);
         }
