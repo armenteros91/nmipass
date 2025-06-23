@@ -32,10 +32,18 @@ namespace ThreeTP.Payment.Application.Commands.Terminals
             var tenantRepository = _unitOfWork.TenantRepository;
             var terminalRepository = _unitOfWork.TerminalRepository;
 
-            var tenantExists = await tenantRepository.GetByIdAsync(request.TerminalRequest.TenantId);
-            if (tenantExists == null)
+            var tenant = await tenantRepository.GetByIdAsync(request.TerminalRequest.TenantId);
+            if (tenant == null)
             {
                 throw new TenantNotFoundException(request.TerminalRequest.TenantId);
+            }
+
+            // Check if the tenant already has a terminal
+            var existingTerminal = await terminalRepository.GetByTenantIdAsync(request.TerminalRequest.TenantId);
+            if (existingTerminal != null)
+            {
+                // Consider using a more specific exception or error response
+                throw new InvalidOperationException($"Tenant '{request.TerminalRequest.TenantId}' already has an associated terminal '{existingTerminal.TerminalId}'.");
             }
 
             var terminal = new Terminal(

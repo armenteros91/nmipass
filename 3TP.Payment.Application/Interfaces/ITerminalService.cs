@@ -15,7 +15,7 @@ namespace ThreeTP.Payment.Application.Interfaces
         // New methods
         Task<TerminalResponseDto> CreateTerminalAsync(CreateTerminalRequestDto createRequest);
         Task<TerminalResponseDto?> GetTerminalByIdAsync(Guid terminalId);
-        Task<IEnumerable<TerminalResponseDto>> GetTerminalsByTenantIdAsync(Guid tenantId);
+        Task<TerminalResponseDto?> GetTerminalByTenantIdAsync(Guid tenantId); // Renamed and changed return type
         Task<bool> UpdateTerminalAsync(Guid terminalId, UpdateTerminalRequestDto updateRequest);
     }
 }

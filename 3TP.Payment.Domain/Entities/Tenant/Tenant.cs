@@ -17,7 +17,8 @@ public class Tenant : BaseEntityWithEvents
     //public IReadOnlyCollection<TenantApiKey> ApiKeys => _apiKeys.AsReadOnly();
     public ICollection<TenantApiKey> ApiKeys { get; set; } = new List<TenantApiKey>();
 
-    public ICollection<Terminal> Terminals { get; set; } = new List<Terminal>();
+    // Changed from ICollection<Terminal> to Terminal?
+    public Terminal? Terminal { get; set; }
 
     protected Tenant()
     {

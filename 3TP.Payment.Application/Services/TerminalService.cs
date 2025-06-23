@@ -55,9 +55,9 @@ namespace ThreeTP.Payment.Application.Services
             return await _mediator.Send(new GetTerminalByIdQuery(terminalId));
         }
 
-        public async Task<IEnumerable<TerminalResponseDto>> GetTerminalsByTenantIdAsync(Guid tenantId)
+        public async Task<TerminalResponseDto?> GetTerminalByTenantIdAsync(Guid tenantId) // Renamed and changed return type
         {
-            return await _mediator.Send(new GetTerminalsByTenantIdQuery(tenantId));
+            return await _mediator.Send(new GetTerminalByTenantIdQuery(tenantId)); // Use the new query
         }
 
         public async Task<bool> UpdateTerminalAsync(Guid terminalId, UpdateTerminalRequestDto updateRequest)

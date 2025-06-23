@@ -51,10 +51,12 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         // builder.Property(e => e.TimeStamp)
         //     .IsRowVersion();
 
-        // Relación 1:N
-        builder.HasMany(t => t.Terminals)
-            .WithOne(tt => tt.Tenant)
-            .HasForeignKey(tt => tt.TenantId)
+        // Relación 1:1 (Tenant has one Terminal, Terminal has one Tenant)
+        // The Terminal entity will define the foreign key back to Tenant.
+        // Tenant.Terminal is the navigation property.
+        builder.HasOne(t => t.Terminal)
+            .WithOne(terminal => terminal.Tenant)
+            .HasForeignKey<Terminal>(terminal => terminal.TenantId) // Foreign key is in Terminal table
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
