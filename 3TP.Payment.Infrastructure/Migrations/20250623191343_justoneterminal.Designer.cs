@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ThreeTP.Payment.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using ThreeTP.Payment.Infrastructure.Persistence;
 namespace ThreeTP.Payment.Infrastructure.Migrations
 {
     [DbContext(typeof(NmiDbContext))]
-    partial class NmiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250623191343_justoneterminal")]
+    partial class justoneterminal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

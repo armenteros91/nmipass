@@ -12,6 +12,11 @@ public class NmiTransactionRequestDtoValidator : AbstractValidator<BaseTransacti
         RuleFor(x => x.SecurityKey).NotEmpty().WithMessage("La clave de seguridad (SecurityKey) es requerida");
         RuleFor(x => x.Amount).NotNull().GreaterThan(0).WithMessage("El monto debe ser mayor que cero");
         RuleFor(x => x.Currency).NotEmpty().WithMessage("La moneda es requerida");
+        RuleFor(x=>x.OrderId)
+            .NotEmpty().WithMessage("El orderId  es requerido")
+            .Must(id => Guid.TryParse(id, out _)).WithMessage("El orderId debe tener un formato GUID válido");//todo validar  pasarela devuelve un string
+                                                                                                              //response  response=1&responsetext=SUCCESS&authcode=123456&transactionid=10845706342&avsresponse=&cvvresponse=N&orderid=&type=&response_code=100
+                                                                                                              //en documentacion orderid= transactionid 
 
         // Requiere tipo de pago
         RuleFor(x => x.PaymentType).NotEmpty().WithMessage("El tipo de pago es requerido");
