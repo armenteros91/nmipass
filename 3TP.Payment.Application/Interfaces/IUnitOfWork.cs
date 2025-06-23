@@ -1,3 +1,7 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace ThreeTP.Payment.Application.Interfaces;
 
 public interface IUnitOfWork : IDisposable

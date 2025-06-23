@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 using ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
 
@@ -7,6 +8,5 @@ public interface IPaymentService
 {
     Task<NmiResponseDto> ProcessPaymentAsync(string apiKey, BaseTransactionRequestDto paymentRequest);
 
-    Task<QueryResponseDto> QueryProcessPaymentAsync(string apiKey,
-        QueryTransactionRequestDto queryTransactionRequest);
+    Task<QueryResponseDto> QueryProcessPaymentAsync(string apiKey, QueryTransactionRequestDto queryTransactionRequest);
 }

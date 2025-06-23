@@ -1,5 +1,5 @@
 using ThreeTP.Payment.Domain.Commons;
-using ThreeTP.Payment.Domain.Events;
+using ThreeTP.Payment.Domain.Events.TenantEvent;
 using ThreeTP.Payment.Domain.Exceptions;
 
 namespace ThreeTP.Payment.Domain.Entities.Tenant;

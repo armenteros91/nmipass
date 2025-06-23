@@ -1,4 +1,10 @@
-﻿using Amazon.SecretsManager.Model;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Amazon.SecretsManager.Model;
 using Amazon.SecretsManager;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Caching.Memory;
@@ -15,6 +21,7 @@ namespace ThreeTP.Payment.Application.Services
         private readonly IMemoryCache _cache;
         private readonly ILogger<AwsSecretManagerService> _logger;
         private readonly MemoryCacheEntryOptions _cacheOptions;
+        private readonly ConcurrentDictionary<string, bool> _cacheKeys = new();
 
         public AwsSecretManagerService(
             IAmazonSecretsManager secretsManager,
@@ -58,6 +65,8 @@ namespace ThreeTP.Payment.Application.Services
             {
                 var response = await _secretsManager.GetSecretValueAsync(request, cancellationToken);
                 _cache.Set(cacheKey, response, _cacheOptions);
+                _cacheKeys.TryAdd(cacheKey, true);
+                _logger.LogInformation("Fetched secret {SecretId} from AWS and cached it", query.SecretId);
                 return response;
             }
             catch (Exception ex)
@@ -84,7 +93,7 @@ namespace ThreeTP.Payment.Application.Services
             {
                 //1.Crear el secreto en aws 
                 var response = await _secretsManager.CreateSecretAsync(request, cancellationToken);
-
+                _logger.LogInformation("Secret {SecretName} created successfully", command.Name);
 
                 //2.vincular el secreto a un terminal 
                 if (command.TerminalId.HasValue)
@@ -100,8 +109,13 @@ namespace ThreeTP.Payment.Application.Services
                     }
                 }
 
-                _unitOfWork.CommitAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
                 return response;
+            }
+            catch (ResourceExistsException rex)
+            {
+                _logger.LogWarning(rex, "Secret {SecretName} already exists", command.Name);
+                throw new InvalidOperationException($"Secret '{command.Name}' already exists.");
             }
             catch (Exception ex)
             {
@@ -160,29 +174,43 @@ namespace ThreeTP.Payment.Application.Services
             }
         }
 
+        //sustituir reflexion con un metodo diccinario 
+        // private void InvalidateCacheForSecret(string secretId)
+        // {
+        //     var cacheKeyPrefix = $"secret_{secretId}_";
+        //
+        //     // Alternativa para .NET Core 3.0+
+        //     if (_cache is MemoryCache memoryCache)
+        //     {
+        //         var field = typeof(MemoryCache).GetProperty("EntriesCollection",
+        //             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        //
+        //         if (field?.GetValue(memoryCache) is ICollection<KeyValuePair<object, object>> entries)
+        //         {
+        //             var keysToRemove = entries
+        //                 .Where(e => e.Key.ToString()?.StartsWith(cacheKeyPrefix) == true)
+        //                 .Select(e => e.Key)
+        //                 .ToList();
+        //
+        //             foreach (var key in keysToRemove)
+        //             {
+        //                 _cache.Remove(key);
+        //             }
+        //         }
+        //     }
+        // }
 
         private void InvalidateCacheForSecret(string secretId)
         {
-            var cacheKeyPrefix = $"secret_{secretId}_";
+            var keysToRemove = _cacheKeys.Keys
+                .Where(k => k.StartsWith($"secret_{secretId}_", StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            // Alternativa para .NET Core 3.0+
-            if (_cache is MemoryCache memoryCache)
+            foreach (var key in keysToRemove)
             {
-                var field = typeof(MemoryCache).GetProperty("EntriesCollection",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                if (field?.GetValue(memoryCache) is ICollection<KeyValuePair<object, object>> entries)
-                {
-                    var keysToRemove = entries
-                        .Where(e => e.Key.ToString()?.StartsWith(cacheKeyPrefix) == true)
-                        .Select(e => e.Key)
-                        .ToList();
-
-                    foreach (var key in keysToRemove)
-                    {
-                        _cache.Remove(key);
-                    }
-                }
+                _cache.Remove(key);
+                _cacheKeys.TryRemove(key, out _);
+                _logger.LogDebug("Invalidated cache for key {CacheKey}", key);
             }
         }
     }

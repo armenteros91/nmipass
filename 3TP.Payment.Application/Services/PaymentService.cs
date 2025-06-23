@@ -1,4 +1,7 @@
+using System;
+using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
@@ -47,13 +50,27 @@ public class PaymentService: IPaymentService
         }
 
         //todo: obtener el secreto del terminal almacenado en el keyvault de aws  roilan
-
+        //todo: buscar en el secreto el config de apikey terminal  de pasarela asociado a ese tenant 
+        
+        
         // 3. Registrar log de la solicitud (NmiTransactionRequestLog)
         var requestLog = _mapper.Map<NmiTransactionRequestLog>(paymentRequest);
         //requestLog.TenantId = tenant.Id;
         await _unitOfWork.Repository<NmiTransactionRequestLog>().AddAsync(requestLog);
 
-        // 4. Registrar entidad de transacción (Transactions)
+       
+        // NMI espera que `security_key` esté incluido and created on  merchant Owner before .
+        paymentRequest.SecurityKey = apiKeyForTerminal;
+
+        // 5. Enviar el Request al Gateway NMI
+        var response = await _nmiPaymentGateway.SendAsync(paymentRequest); //envia a la pasarela procesar el pago 
+
+        _logger.LogInformation("Payment processed for Tenant {TenantId} with Response: {ResponseCode}", tenant.TenantId,
+            response.Response);
+        
+        
+        //todo: registrar en la tabla de transacciones 
+        // 6. Registrar entidad de transacción (Transactions)
         // var transactionEntity = _mapper.Map<Transactions>(new CreateTransactionRequestDto
         // {
         //     TenantId = tenant.Id,
@@ -65,21 +82,14 @@ public class PaymentService: IPaymentService
 
         // await _unitOfWork.Repository<Transactions>().AddAsync(transactionEntity);
 
-        // NMI espera que `security_key` esté incluido and created on  merchant Owner before .
-        paymentRequest.SecurityKey = apiKeyForTerminal;
+        
 
-        // 5. Enviar el Request al Gateway NMI
-        var response = await _nmiPaymentGateway.SendAsync(paymentRequest);
-
-        _logger.LogInformation("Payment processed for Tenant {TenantId} with Response: {ResponseCode}", tenant.TenantId,
-            response.Response);
-
-        // 6. Guardar respuesta detallada (TransactionResponse)
+        // 7. Guardar respuesta detallada (TransactionResponse)
         // var responseEntity = _mapper.Map<TransactionResponse>(response);
         // responseEntity.TransactionId = transactionEntity.TransactionsId.ToString();
         // await _unitOfWork.Repository<TransactionResponse>().AddAsync(responseEntity);
 
-        // 7. Guardar respuesta sin procesar como log adicional (opcional)
+        // 8. Guardar respuesta sin procesar como log adicional (opcional)
         // var responseLog = _mapper.Map<NmiTransactionResponseLog>((response.RawResponse ?? "", requestLog.Id, response.TransactionId, response.Response, response.ResponseText));
         // await _unitOfWork.Repository<NmiTransactionResponseLog>().AddAsync(responseLog);
 

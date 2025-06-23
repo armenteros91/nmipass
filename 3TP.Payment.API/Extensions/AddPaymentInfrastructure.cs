@@ -83,7 +83,7 @@ public static class PaymentInfrastructureExtensions
         //     options.UseSqlServer(configuration.GetConnectionString("NmiDb")));
 
         // Register a startup service to apply migrations automatically
-        services.AddHostedService<DatabaseMigrationService>();
+      //  services.AddHostedService<DatabaseMigrationService>();
     }
 
     private static void AddAwsSecretManagerServices(this IServiceCollection services, IConfiguration configuration)
@@ -169,33 +169,38 @@ public static class PaymentInfrastructureExtensions
 /// <summary>
 /// Hosted service to apply database migrations at application startup.
 /// </summary>
-public class DatabaseMigrationService : IHostedService
-{
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<DatabaseMigrationService> _logger;
-
-    public DatabaseMigrationService(IServiceProvider serviceProvider, ILogger<DatabaseMigrationService> logger)
-    {
-        _serviceProvider = serviceProvider;
-        _logger = logger;
-    }
-
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<NmiDbContext>();
-        try
-        {
-            _logger.LogInformation("Applying database migrations for NmiDbContext...");
-           // await context.Database.MigrateAsync(cancellationToken);
-            _logger.LogInformation("Database migrations applied successfully.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to apply database migrations.");
-            throw; // Rethrow to prevent the application from starting with an inconsistent database
-        }
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-}
+// public class DatabaseMigrationService : IHostedService
+// {
+//     private readonly IServiceProvider _serviceProvider;
+//     private readonly ILogger<DatabaseMigrationService> _logger;
+//
+//     public DatabaseMigrationService(IServiceProvider serviceProvider, ILogger<DatabaseMigrationService> logger)
+//     {
+//         _serviceProvider = serviceProvider;
+//         _logger = logger;
+//     }
+//
+// //todo:comentado por seguridad 
+//     /// <summary>
+//     /// 
+//     /// </summary>
+//     /// <param name="cancellationToken"></param>
+//     /// <returns></returns>
+//     // public async Task StartAsync(CancellationToken cancellationToken)
+//     // {
+//     //     using var scope = _serviceProvider.CreateScope();
+//     //     var context = scope.ServiceProvider.GetRequiredService<NmiDbContext>();
+//     //     try
+//     //     {
+//     //         _logger.LogInformation("Applying database migrations for NmiDbContext...");
+//     //        // await context.Database.MigrateAsync(cancellationToken);
+//     //         _logger.LogInformation("Database migrations applied successfully.");
+//     //     }
+//     //     catch (Exception ex)
+//     //     {
+//     //         _logger.LogError(ex, "Failed to apply database migrations.");
+//     //         throw; // Rethrow to prevent the application from starting with an inconsistent database
+//     //     }
+//     // }
+//     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+// }

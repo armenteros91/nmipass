@@ -1,9 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Common.Exceptions;
 using ThreeTP.Payment.Application.Common.Responses;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
-using ThreeTP.Payment.Domain.Events;
+using ThreeTP.Payment.Domain.Events.TenantEvent;
 using ThreeTP.Payment.Domain.Exceptions;
 
 namespace ThreeTP.Payment.Application.Services;
@@ -171,6 +175,55 @@ public class TenantService : ITenantService
         {
             _logger.LogWarning("Validation failed for tenant: {Errors}", errors);
             throw new CustomValidationException(new ValidationErrorResponse { Errors = errors });
+        }
+    }
+
+    public async Task<TenantApiKey> AddApiKeyAsync(Guid tenantId, string apiKeyValue, string? description,
+        bool isActive)
+    {
+        _logger.LogInformation("Attempting to add API key for TenantId: {TenantId} via TenantService", tenantId);
+
+        var tenant = await _unitOfWork.TenantRepository.GetByIdAsync(tenantId);
+        if (tenant == null)
+        {
+            _logger.LogWarning("TenantService: Tenant with Id {TenantId} not found", tenantId);
+            throw new TenantNotFoundException(tenantId);
+        }
+
+        var newApiKey = new TenantApiKey(apiKeyValue, tenantId)
+        {
+            Description = description,
+            Status = isActive
+        };
+
+        try
+        {
+            //tenant.AddApiKey(newApiKey);
+            _unitOfWork.TenantRepository.Addapikey(newApiKey);
+            // This method within Tenant entity adds the key to its collection
+            // and raises TenantApiKeyAddedEvent.
+
+            // _unitOfWork.TenantRepository.Update(tenant);
+            await _unitOfWork.CommitAsync();
+
+            _logger.LogInformation("TenantService: Successfully added API key {ApiKeyId} to TenantId: {TenantId}",
+                newApiKey.TenantApikeyId, tenantId);
+            return newApiKey;
+        }
+        catch (InvalidTenantException ex) // Catch specific exception from tenant.AddApiKey (e.g. duplicate key)
+        {
+            _logger.LogWarning(ex, "TenantService: Error adding API key to tenant {TenantId}: {ErrorMessage}", tenantId,
+                ex.Message);
+            // Re-throw to be handled by presentation layer or global exception handler
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "TenantService: An unexpected error occurred while adding API key to tenant {TenantId}", tenantId);
+            // Consider if rollback is needed and possible via _unitOfWork here, if CommitAsync failed.
+            // await _unitOfWork.RollbackTransactionAsync();
+            throw; // Re-throw the exception
         }
     }
 }
