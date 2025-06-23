@@ -6,7 +6,7 @@ namespace ThreeTP.Payment.Application.Interfaces
     {
         Task<Terminal?> GetByIdAsync(Guid id);
         Task<Terminal?> GetBySecretKeyAsync(string encryptedSecretKey);
-        Task<IEnumerable<Terminal>> GetByTenantIdAsync(Guid tenantId);
+        Task<Terminal?> GetByTenantIdAsync(Guid tenantId); // Changed from IEnumerable<Terminal>
         Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId);
         Task UpdateSecretKeyAsync(Guid terminalId, string newPlainSecretKey);
         Task<Terminal?> FindBySecretNameAsync(string plainSecretName);

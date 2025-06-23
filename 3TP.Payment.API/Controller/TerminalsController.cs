@@ -29,10 +29,11 @@ namespace ThreeTP.Payment.API.Controller
         /// <param name="tenantId">The ID of the tenant for whom the terminal is being created.</param>
         /// <param name="createRequest">The terminal creation request data.</param>
         /// <returns>The created terminal's details.</returns>
-        [HttpPost("tenants/{tenantId:guid}/terminals")]
+        [HttpPost("tenants/{tenantId:guid}/terminal")] // Route changed to singular "terminal"
         [ProducesResponseType(typeof(TerminalResponseDto), 201)]
         [ProducesResponseType(400)] // Bad Request (validation errors)
         [ProducesResponseType(404)] // Tenant Not Found
+        [ProducesResponseType(409)] // Conflict (Terminal already exists for tenant)
         public async Task<IActionResult> CreateTerminalForTenant(Guid tenantId, [FromBody] CreateTerminalRequestDto createRequest)
         {
             if (tenantId == Guid.Empty)
@@ -70,6 +71,11 @@ namespace ThreeTP.Payment.API.Controller
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (InvalidOperationException ex) // Catch if tenant already has a terminal
+            {
+                // This exception is thrown by CreateTerminalCommandHandler
+                return Conflict(new { message = ex.Message });
+            }
             // Add other specific exception handling as needed
         }
 
@@ -99,23 +105,27 @@ namespace ThreeTP.Payment.API.Controller
         /// <summary>
         /// Retrieves all terminals associated with a specific tenant.
         /// </summary>
-        /// <param name="tenantId">The ID of the tenant whose terminals are to be retrieved.</param>
-        /// <returns>A list of terminals for the specified tenant.</returns>
-        [HttpGet("tenants/{tenantId:guid}/terminals")]
-        [ProducesResponseType(typeof(IEnumerable<TerminalResponseDto>), 200)]
-        [ProducesResponseType(404)] // Tenant Not Found (if you check tenant existence first)
-        public async Task<IActionResult> GetTerminalsByTenantId(Guid tenantId)
+        /// <param name="tenantId">The ID of the tenant whose terminal is to be retrieved.</param>
+        /// <returns>The terminal details if found for the specified tenant; otherwise, Not Found.</returns>
+        [HttpGet("tenants/{tenantId:guid}/terminal")] // Route changed to singular "terminal"
+        [ProducesResponseType(typeof(TerminalResponseDto), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetTerminalByTenantId(Guid tenantId) // Method name changed
         {
             if (tenantId == Guid.Empty)
             {
                 return BadRequest(new { message = "Tenant ID is required." });
             }
-            // Optionally, first check if tenant exists before fetching terminals
-            // var tenant = await _tenantService.GetTenantByIdAsync(tenantId);
-            // if (tenant == null) return NotFound(new { message = $"Tenant with ID {tenantId} not found." });
 
-            var terminals = await _terminalService.GetTerminalsByTenantIdAsync(tenantId);
-            return Ok(terminals);
+            var terminal = await _terminalService.GetTerminalByTenantIdAsync(tenantId); // Use the new service method
+            if (terminal == null)
+            {
+                // This could mean tenant not found, or tenant exists but has no terminal.
+                // Depending on desired behavior, you might want to differentiate.
+                // For now, returning 404 if no terminal is found for the tenant.
+                return NotFound(new { message = $"Terminal not found for Tenant ID {tenantId}." });
+            }
+            return Ok(terminal);
         }
 
         /// <summary>

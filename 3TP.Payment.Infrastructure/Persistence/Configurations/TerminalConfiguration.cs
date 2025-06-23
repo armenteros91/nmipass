@@ -31,19 +31,26 @@ public class TerminalConfiguration : IEntityTypeConfiguration<Terminal>
         // builder.Property(tt => tt.TimeStamp)
         //     .IsRowVersion();
 
-        builder.HasOne(t => t.Tenant)
-            .WithMany(tn => tn.Terminals) // Colección en Tenant
-            .HasForeignKey(t => t.TenantId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // This side of the relationship is configured in TenantConfiguration.
+        // builder.HasOne(t => t.Tenant)
+        //    .WithOne(tn => tn.Terminal) // Corrected from WithMany
+        //    .HasForeignKey<Terminal>(t => t.TenantId) // Type specified for clarity
+        //    .OnDelete(DeleteBehavior.Cascade);
         
-        // Índice por TenantId para acelerar búsquedas
+        // Índice por TenantId para acelerar búsquedas.
+        // For a 1-to-1 relationship, TenantId should be unique.
         builder.HasIndex(tt => tt.TenantId)
-            .HasDatabaseName("IDX_TblTerminalTenants_TenantId");
+            .IsUnique() // TenantId must be unique as each Tenant has only one Terminal
+            .HasDatabaseName("UQ_TblTerminalTenants_TenantId");
 
-        // Índice único por TenantId y SecretKey
-        builder.HasIndex(tt => new { tt.TenantId, tt.SecretKeyEncrypted })
+        // Índice único por SecretKeyEncrypted (assuming secret keys should be globally unique or unique per tenant)
+        // If SecretKeyEncrypted should be globally unique:
+        builder.HasIndex(tt => tt.SecretKeyEncrypted)
             .IsUnique()
-            .HasDatabaseName("UQ_Tenant_SecretKey");
+            .HasDatabaseName("UQ_Terminal_SecretKeyEncrypted");
+        // If SecretKeyEncrypted only needs to be unique per tenant, the UQ_TblTerminalTenants_TenantId ensures this.
+        // The previous index UQ_Tenant_SecretKey (TenantId, SecretKeyEncrypted) is no longer needed
+        // because TenantId itself is now unique.
 
         //Implementation de hash para optimizar consutlas de secretos cuando la base de datos sea muy grande 
         builder.Property(t => t.SecretKeyHash)
