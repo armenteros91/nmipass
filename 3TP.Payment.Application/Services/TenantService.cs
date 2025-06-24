@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Common.Exceptions;
 using ThreeTP.Payment.Application.Common.Responses;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using ThreeTP.Payment.Domain.Events.TenantEvent;
 using ThreeTP.Payment.Domain.Exceptions;

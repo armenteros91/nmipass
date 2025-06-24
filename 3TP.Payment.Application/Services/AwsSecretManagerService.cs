@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using Amazon.SecretsManager.Model;
 using Amazon.SecretsManager;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Caching.Memory;
 using ThreeTP.Payment.Application.Commands.AwsSecrets;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.aws;
 using ThreeTP.Payment.Application.Queries.AwsSecrets;
 
 namespace ThreeTP.Payment.Application.Services

@@ -1,55 +1,80 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
-using System.Threading;
-using System.Threading.Tasks;
-using ThreeTP.Payment.Domain.Exceptions; // Assuming a TerminalNotFoundException or similar
 
-namespace ThreeTP.Payment.Application.Commands.Terminals
+namespace ThreeTP.Payment.Application.Commands.Terminals;
+
+public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalCommand, bool>
 {
-    public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalCommand, bool>
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IEncryptionService _encryptionService;
+    private readonly ILogger<UpdateTerminalCommandHandler> _logger;
+
+    public UpdateTerminalCommandHandler(
+        IUnitOfWork unitOfWork,
+        IEncryptionService encryptionService,
+        ILogger<UpdateTerminalCommandHandler> logger)
     {
-        private readonly IUnitOfWork _unitOfWork;
+        _unitOfWork = unitOfWork;
+        _encryptionService = encryptionService;
+        _logger = logger;
+    }
 
-        public UpdateTerminalCommandHandler(IUnitOfWork unitOfWork)
+    public async Task<bool> Handle(UpdateTerminalCommand request, CancellationToken cancellationToken)
+    {
+        var strategy = _unitOfWork.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
         {
-            _unitOfWork = unitOfWork;
-        }
+            _logger.LogInformation("Starting UpdateTerminalCommand for TerminalId: {TerminalId}", request.TerminalId);
 
-        public async Task<bool> Handle(UpdateTerminalCommand request, CancellationToken cancellationToken)
-        {
-            var terminalRepository = _unitOfWork.TerminalRepository;
-            var terminal = await terminalRepository.GetByIdAsync(request.TerminalId);
-
-            if (terminal == null)
+            try
             {
-                // Consider throwing a specific TerminalNotFoundException
-                return false;
-            }
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+                _logger.LogInformation("Transaction started for TerminalId: {TerminalId}", request.TerminalId);
 
-            bool updated = false;
-            if (request.UpdateRequest.Name != null)
+                var terminal = await _unitOfWork.TerminalRepository.GetByIdAsync(request.TerminalId);
+
+                if (terminal == null)
+                {
+                    _logger.LogWarning("Terminal with ID {TerminalId} not found", request.TerminalId);
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    return false;
+                }
+
+                var dto = request.UpdateRequest;
+
+                bool updated = terminal.Update(
+                    name: dto.SecretDescription,
+                    isActive: dto.TerminalUpdate.IsActive,
+                    apiKey: dto.TerminalUpdate.ApiKey,
+                    encrypt: _encryptionService.Encrypt,
+                    hash: _encryptionService.Hash
+                );
+
+                if (updated  && dto.TerminalUpdate.ApiKey != null)
+                {
+                    _logger.LogInformation("Terminal with ID {TerminalId} updated successfully", request.TerminalId);
+                    _unitOfWork.TerminalRepository.Update(terminal);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                    _logger.LogInformation("Transaction committed for TerminalId: {TerminalId}", request.TerminalId);
+                }
+                else
+                {
+                    _logger.LogInformation("No changes detected for TerminalId: {TerminalId}", request.TerminalId);
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                }
+
+                return updated;
+            }
+            catch (Exception ex)
             {
-                terminal.Name = request.UpdateRequest.Name;
-                updated = true;
+                _logger.LogError(ex, "Error occurred while updating TerminalId: {TerminalId}", request.TerminalId);
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                throw;
             }
-
-            if (request.UpdateRequest.IsActive.HasValue)
-            {
-                terminal.IsActive = request.UpdateRequest.IsActive.Value;
-                updated = true;
-            }
-
-            // Note: SecretKey update is handled by UpdateSecretKeyAsync in repository if needed as a separate operation.
-            // If you want to include it here, you'd call that method.
-            // For now, this handler only updates Name and IsActive.
-
-            if (updated)
-            {
-                terminalRepository.Update(terminal); // Assuming a generic Update method from IGenericRepository
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-            }
-
-            return true;
-        }
+        });
     }
 }

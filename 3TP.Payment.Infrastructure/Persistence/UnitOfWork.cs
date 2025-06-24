@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.Repository;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
+using ThreeTP.Payment.Application.Interfaces.Terminals;
 using ThreeTP.Payment.Domain.Commons;
 using ThreeTP.Payment.Infrastructure.Persistence.Repositories;
 
@@ -167,6 +170,11 @@ public class UnitOfWork : IUnitOfWork, IAsyncDisposable
         {
             await ResetEntityStatesAsync();
         }
+    }
+
+    public IExecutionStrategy CreateExecutionStrategy()
+    {
+        return _sharedContext.Database.CreateExecutionStrategy();
     }
 
 

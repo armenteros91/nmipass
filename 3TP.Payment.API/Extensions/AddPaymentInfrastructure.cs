@@ -7,6 +7,11 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Formatting.Compact;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.aws;
+using ThreeTP.Payment.Application.Interfaces.Payment;
+using ThreeTP.Payment.Application.Interfaces.Repository;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
+using ThreeTP.Payment.Application.Interfaces.Terminals;
 using ThreeTP.Payment.Application.Mappings;
 using ThreeTP.Payment.Application.Options;
 using ThreeTP.Payment.Application.Services;
@@ -98,6 +103,12 @@ public static class PaymentInfrastructureExtensions
         });
         services.AddMemoryCache();
         services.AddScoped<IAwsSecretManagerService, AwsSecretManagerService>();
+        services.AddScoped<IAwsSecretCacheService, AwsSecretCacheService>();
+        
+        //aws secret 
+        services.AddScoped<IAwsSecretCacheService, AwsSecretCacheService>();
+        services.AddScoped<IAwsSecretsProvider, AwsSecretsProvider>();
+        services.AddScoped<IAwsSecretSyncService, AwsSecretSyncService>();
     }
 
     private static void AddNmiPaymentServices(this IServiceCollection services, IConfiguration configuration)

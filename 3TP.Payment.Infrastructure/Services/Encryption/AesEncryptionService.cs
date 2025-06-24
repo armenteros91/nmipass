@@ -1,6 +1,8 @@
 ﻿using System.Security.Cryptography;
+using Amazon.SecretsManager.Model.Internal.MarshallTransformations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ThreeTP.Payment.Application.Helpers;
 using ThreeTP.Payment.Application.Interfaces;
 
 namespace ThreeTP.Payment.Infrastructure.Services.Encryption
@@ -16,9 +18,9 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
             _logger = logger;
 
             var rawKey = config["Encryption:Key"];
-            var rawIV = config["Encryption:IV"];
+            var rawIv = config["Encryption:IV"];
 
-            if (string.IsNullOrWhiteSpace(rawKey) || string.IsNullOrWhiteSpace(rawIV))
+            if (string.IsNullOrWhiteSpace(rawKey) || string.IsNullOrWhiteSpace(rawIv))
             {
                 throw new ArgumentException("Encryption key or IV is missing in configuration.");
             }
@@ -26,7 +28,7 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
             using var sha256 = SHA256.Create();
 
             _key = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawKey));
-            _iv = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawIV))[..16]; // 16 bytes IV
+            _iv = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawIv))[..16]; // 16 bytes IV
 
             if (_key.Length != 16 && _key.Length != 24 && _key.Length != 32)
             {
@@ -40,7 +42,7 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
                 throw new ArgumentException("Invalid AES IV size.");
             }
 
-            _logger.LogInformation("AesEncryptionService initialized successfully with AES-{KeySize}-CBC.", _key.Length * 8);
+            _logger.LogInformation("AesEncryptionService initialized successfully with AES-{KeySize}-CBC", _key.Length * 8);
         }
 
         public string Encrypt(string plainText)
@@ -59,7 +61,7 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Encryption failed.");
+                _logger.LogError(ex, "Encryption failed");
                 throw;
             }
         }
@@ -77,9 +79,14 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Decryption failed.");
+                _logger.LogError(ex, "Decryption failed");
                 throw;
             }
+        }
+
+        public string Hash(string input)
+        {
+            return Utils.ComputeSha256(input);
         }
     }
 }

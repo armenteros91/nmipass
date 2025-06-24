@@ -1,7 +1,8 @@
 using Amazon.SecretsManager.Model;
 using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.AwsSecrets;
-using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.DTOs.aws;
+using ThreeTP.Payment.Application.Interfaces.aws;
 using ThreeTP.Payment.Application.Queries.AwsSecrets;
 
 namespace ThreeTP.Payment.API.Controller;
@@ -11,10 +12,17 @@ namespace ThreeTP.Payment.API.Controller;
 public class SecretsController : ControllerBase
 {
     private readonly IAwsSecretManagerService _awsSecretManagerService;
+    private readonly ILogger<SecretsController> _logger;
+    private readonly IAwsSecretsProvider _awsSecretsProvider;
 
-    public SecretsController(IAwsSecretManagerService awsSecretManagerService)
+    public SecretsController(
+        IAwsSecretManagerService awsSecretManagerService,
+        ILogger<SecretsController> logger,
+        IAwsSecretsProvider awsSecretsProvider)
     {
         _awsSecretManagerService = awsSecretManagerService;
+        _logger = logger;
+        _awsSecretsProvider = awsSecretsProvider;
     }
 
     /// <summary>
@@ -40,5 +48,31 @@ public class SecretsController : ControllerBase
     {
         var result = await _awsSecretManagerService.CreateSecretAsync(command);
         return CreatedAtAction(nameof(GetSecret), new { secretId = result.ARN }, result);
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(List<SecretSummary>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetSecrets(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var entries = await _awsSecretsProvider.ListSecretsAsync(cancellationToken);
+
+            var summaries = entries.Select(e => new SecretSummary
+            {
+                SecretId = e.ARN, // ← Se asigna el ARN como identificador
+                Name = e.Name,
+                Description = e.Description,
+                LastModified = e.LastChangedDate
+            }).ToList();
+
+            return Ok(summaries);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving secrets from AWS");
+            return StatusCode(500, "An error occurred while retrieving secrets.");
+        }
     }
 }

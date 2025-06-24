@@ -1,6 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
+using ThreeTP.Payment.Application.Interfaces.Repository;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
+using ThreeTP.Payment.Application.Interfaces.Terminals;
 
 namespace ThreeTP.Payment.Application.Interfaces;
 
@@ -51,4 +55,8 @@ public interface IUnitOfWork : IDisposable
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+
+    public IExecutionStrategy CreateExecutionStrategy();
+
+
 }

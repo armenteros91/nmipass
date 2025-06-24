@@ -1,7 +1,7 @@
 ﻿using Amazon.SecretsManager.Model;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.aws;
 
 namespace ThreeTP.Payment.Application.Commands.AwsSecrets
 {

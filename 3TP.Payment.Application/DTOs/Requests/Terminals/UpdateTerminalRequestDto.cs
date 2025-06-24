@@ -4,5 +4,6 @@ namespace ThreeTP.Payment.Application.DTOs.Requests.Terminals
     {
         public string? Name { get; set; }
         public bool? IsActive { get; set; }
+        public  string? ApiKey { get; set; }
     }
 }

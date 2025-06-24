@@ -35,5 +35,37 @@ namespace ThreeTP.Payment.Domain.Entities.Tenant
         {
             SecretKeyEncrypted = secretKey; // Será encriptado por el repositorio
         }
+
+        public bool Update(string? name, bool? isActive, string? apiKey, Func<string, string> encrypt,
+            Func<string, string> hash)
+        {
+            bool updated = false;
+
+            if (!string.IsNullOrWhiteSpace(name) && name != Name)
+            {
+                Name = name;
+                updated = true;
+            }
+
+            if (isActive.HasValue && isActive.Value != IsActive)
+            {
+                IsActive = isActive.Value;
+                updated = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                var encrypted = encrypt(apiKey);
+                var hashed = hash(apiKey);
+
+                if (encrypted != SecretKeyEncrypted || hashed != SecretKeyHash)
+                {
+                    SecretKeyEncrypted = encrypted;
+                    SecretKeyHash = hashed;
+                    updated = true;
+                }
+            }
+            return updated;
+        }
     }
 }

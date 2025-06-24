@@ -1,6 +1,7 @@
 ﻿using Amazon.SecretsManager.Model;
 using MediatR;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.aws;
 
 namespace ThreeTP.Payment.Application.Queries.AwsSecrets
 {

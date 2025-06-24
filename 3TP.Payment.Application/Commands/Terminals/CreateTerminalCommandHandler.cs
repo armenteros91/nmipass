@@ -7,7 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ThreeTP.Payment.Domain.Exceptions; // Assuming you have a TenantNotFoundException
 using AutoMapper; // You'll need to add AutoMapper for mapping
-using ThreeTP.Payment.Application.Commands.AwsSecrets; // Added for CreateSecretCommand
+using ThreeTP.Payment.Application.Commands.AwsSecrets;
+using ThreeTP.Payment.Application.Interfaces.aws; // Added for CreateSecretCommand
 
 namespace ThreeTP.Payment.Application.Commands.Terminals
 {

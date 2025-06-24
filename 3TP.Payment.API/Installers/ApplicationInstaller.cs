@@ -4,6 +4,10 @@ using MediatR;
 using ThreeTP.Payment.Application.Behaviors;
 using ThreeTP.Payment.Application.Commands.AwsSecrets; // For CreateSecretCommandHandler
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.aws;
+using ThreeTP.Payment.Application.Interfaces.Payment;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
+using ThreeTP.Payment.Application.Interfaces.Terminals;
 using ThreeTP.Payment.Application.Services;
 using ThreeTP.Payment.Infrastructure.Events;
 

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ThreeTP.Payment.Domain.Commons;
 using ThreeTP.Payment.Domain.Events.TenantEvent;
 using ThreeTP.Payment.Domain.Exceptions;
@@ -14,11 +15,13 @@ public class Tenant : BaseEntityWithEvents
 
 
     private readonly List<TenantApiKey> _apiKeys = [];
+
     //public IReadOnlyCollection<TenantApiKey> ApiKeys => _apiKeys.AsReadOnly();
     public ICollection<TenantApiKey> ApiKeys { get; set; } = new List<TenantApiKey>();
 
     // Changed from ICollection<Terminal> to Terminal?
-    public Terminal? Terminal { get; set; }
+    [JsonIgnore]
+    public virtual Terminal? Terminal { get; set; } //todo: evitar anidacion infinita al serializar objetos relacionados 
 
     protected Tenant()
     {

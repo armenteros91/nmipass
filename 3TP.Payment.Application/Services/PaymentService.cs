@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 using ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.aws;
+using ThreeTP.Payment.Application.Interfaces.Payment;
 using ThreeTP.Payment.Application.Queries.AwsSecrets;
 using ThreeTP.Payment.Domain.Entities.Nmi;
 using ThreeTP.Payment.Domain.Entities.Payments;
@@ -160,7 +162,6 @@ public class PaymentService: IPaymentService
             throw new ArgumentException("El monto debe ser mayor que cero.", nameof(paymentRequest.Amount));
 
   
-
         // Crear la entidad
         var transactionEntity = _mapper.Map<Transactions>(new CreateTransactionRequestDto
         {
@@ -195,6 +196,7 @@ public class PaymentService: IPaymentService
         return nmiResponse;
     }
 
+    
     public async Task<QueryResponseDto> QueryProcessPaymentAsync(string apiKey,
         QueryTransactionRequestDto queryTransactionRequest)
     {
@@ -202,6 +204,7 @@ public class PaymentService: IPaymentService
 
         // 1. Buscar Tenant
         var tenant = await _unitOfWork.TenantRepository.GetByApiKeyAsync(apiKey);
+        
         //validar tenant y terminal id 
         if (tenant == null || !tenant.IsActive)
         {

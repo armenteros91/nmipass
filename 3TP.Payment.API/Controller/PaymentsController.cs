@@ -4,6 +4,7 @@ using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 using ThreeTP.Payment.Application.DTOs.Requests.Tenants;
 using ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.Payment;
 using ThreeTP.Payment.Application.Services;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using ThreeTP.Payment.Infrastructure.Services.Neutrino;

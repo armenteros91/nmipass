@@ -12,9 +12,9 @@ namespace ThreeTP.Payment.Application.Validators.Terminals
 
             RuleFor(x => x.UpdateRequest).NotNull();
 
-            RuleFor(x => x.UpdateRequest.Name)
+            RuleFor(x => x.UpdateRequest.TerminalUpdate.Name)
                 .MaximumLength(100).WithMessage("Terminal name cannot exceed 100 characters.")
-                .When(x => x.UpdateRequest.Name != null); // Validate only if Name is provided
+                .When(x => x.UpdateRequest.TerminalUpdate.Name != null); // Validate only if Name is provided
         }
     }
 }

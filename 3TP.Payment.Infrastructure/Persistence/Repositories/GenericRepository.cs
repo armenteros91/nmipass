@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.Repository;
 
 namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 {
@@ -92,7 +93,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 
             _logger.LogInformation("Adding a new entity of type {BaseEntity}", typeof(T).Name);
             await _dbContext.Set<T>().AddAsync(entity);
-            await _dbContext.SaveChangesAsync();
+           // await _dbContext.SaveChangesAsync(); //delegar al uow el trabajo de persistencia en la DB 
         }
 
 
@@ -107,7 +108,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 
             _logger.LogInformation("Updating an entity of type {BaseEntity}", typeof(T).Name);
             _dbContext.Set<T>().Update(entity);
-            await _dbContext.SaveChangesAsync();
+           // await _dbContext.SaveChangesAsync(); //delegar al uow el trabajo de persistencia en la DB 
         }
 
         /// <summary>
@@ -120,7 +121,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             ArgumentNullException.ThrowIfNull(entity);
             _logger.LogInformation("Deleting an entity of type {BaseEntity}", typeof(T).Name);
             _dbContext.Set<T>().Remove(entity);
-            await _dbContext.SaveChangesAsync();
+         //   await _dbContext.SaveChangesAsync(); //delegar al uow el trabajo de persistencia en la DB 
         }
 
         /// <summary>

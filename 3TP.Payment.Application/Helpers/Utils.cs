@@ -190,7 +190,7 @@ public static class Utils
     /// </summary>
     /// <param name="input"></param>
     /// <returns></returns>
-    public static string ComputeSHA256(string input)
+    public static string ComputeSha256(string input)
     {
         using var sha = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(input);

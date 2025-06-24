@@ -5,6 +5,7 @@ using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 using ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
 using ThreeTP.Payment.Application.Helpers;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.Payment;
 using ThreeTP.Payment.Domain.Entities.Nmi;
 
 namespace ThreeTP.Payment.Infrastructure.Services.Nmi;

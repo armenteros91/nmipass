@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using ThreeTP.Payment.Application.Helpers;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
 using ThreeTP.Payment.Domain.Events.TenantEvent;
 
 namespace ThreeTP.Payment.Application.Commands.Tenants

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ThreeTP.Payment.Application.Helpers;
 using ThreeTP.Payment.Application.Interfaces;
+using ThreeTP.Payment.Application.Interfaces.Terminals;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 
 namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
@@ -60,7 +61,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             // Encripta y hashea el secreto antes de persistir
             var plainSecretKey = entity.SecretKeyEncrypted;
             entity.SecretKeyEncrypted = _encryptionService.Encrypt(plainSecretKey);
-            entity.SecretKeyHash = Utils.ComputeSHA256(plainSecretKey);
+            entity.SecretKeyHash = Utils.ComputeSha256(plainSecretKey);
 
             await base.AddAsync(entity);
             _logger.LogInformation("Terminal {TerminalId} added for Tenant {TenantId}", entity.TerminalId, entity.TenantId);
@@ -81,7 +82,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             }
 
             terminal.SecretKeyEncrypted = _encryptionService.Encrypt(newPlainSecretKey);
-            terminal.SecretKeyHash = Utils.ComputeSHA256(newPlainSecretKey);
+            terminal.SecretKeyHash = Utils.ComputeSha256(newPlainSecretKey);
 
             _dbContext.Set<Terminal>().Update(terminal);
         }
@@ -98,7 +99,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             
             _logger.LogInformation("Getting terminal with secret: {PlainSecret}", plainSecretName);
             
-            var hash = Utils.ComputeSHA256(plainSecretName);
+            var hash = Utils.ComputeSha256(plainSecretName);
             return await _dbContext.Set<Terminal>()
                 .FirstOrDefaultAsync(t => t.SecretKeyHash == hash);
         }
