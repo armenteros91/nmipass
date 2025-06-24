@@ -15,7 +15,7 @@ namespace ThreeTP.Payment.Application.Tests.Queries.Terminals
     [TestFixture]
     public class GetTerminalByIdQueryHandlerTests
     {
-        private Mock<ITerminalRepository> _terminalRepositoryMock;
+        private Mock<ThreeTP.Payment.Application.Interfaces.Terminals.ITerminalRepository> _terminalRepositoryMock;
         private Mock<IUnitOfWork> _unitOfWorkMock;
         private Mock<IMapper> _mapperMock;
         private GetTerminalByIdQueryHandler _handler;
@@ -23,7 +23,7 @@ namespace ThreeTP.Payment.Application.Tests.Queries.Terminals
         [SetUp]
         public void SetUp()
         {
-            _terminalRepositoryMock = new Mock<ITerminalRepository>();
+            _terminalRepositoryMock = new Mock<ThreeTP.Payment.Application.Interfaces.Terminals.ITerminalRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
 

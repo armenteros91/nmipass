@@ -9,30 +9,31 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
+using NUnit.Framework;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
 
 namespace ThreeTP.Payment.Application.Tests.Services
 {
-    // Assuming a new test class for these specific tests or adapt if TenantServiceTests exists
-    public class TenantServiceAddApiKeyTests // Renamed to avoid conflict if TenantServiceTests exists
+    [TestFixture]
+    public class TenantServiceAddApiKeyTests // Original name was TenantServiceAddApiKeyTests
     {
-        private readonly Mock<IUnitOfWork> _mockUnitOfWork;
-        private readonly Mock<ITenantRepository> _mockTenantRepository;
-        private readonly Mock<ILogger<TenantService>> _mockLogger;
-        private readonly TenantService _tenantService;
+        private Mock<IUnitOfWork> _mockUnitOfWork;
+        private Mock<ITenantRepository> _mockTenantRepository;
+        private Mock<ILogger<TenantService>> _mockLogger;
+        private TenantService _tenantService;
 
-        public TenantServiceAddApiKeyTests()
+        [SetUp]
+        public void Setup()
         {
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockTenantRepository = new Mock<ITenantRepository>();
             _mockLogger = new Mock<ILogger<TenantService>>();
 
             _mockUnitOfWork.Setup(uow => uow.TenantRepository).Returns(_mockTenantRepository.Object);
-
             _tenantService = new TenantService(_mockUnitOfWork.Object, _mockLogger.Object);
         }
 
-        [Fact]
+        [Test]
         public async Task AddApiKeyAsync_Should_AddApiKeyAndCommit_WhenTenantExists()
         {
             // Arrange
@@ -45,7 +46,7 @@ namespace ThreeTP.Payment.Application.Tests.Services
             var isActive = true;
 
             _mockTenantRepository.Setup(repo => repo.GetByIdAsync(tenantId)).ReturnsAsync(tenant);
-            _mockUnitOfWork.Setup(uow => uow.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask); // Make sure CommitAsync is mockable on IUnitOfWork for service test
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
             // Act
             var resultApiKey = await _tenantService.AddApiKeyAsync(tenantId, apiKeyValue, description, isActive);
@@ -53,26 +54,26 @@ namespace ThreeTP.Payment.Application.Tests.Services
             // Assert
             _mockTenantRepository.Verify(repo => repo.GetByIdAsync(tenantId), Times.Once);
 
-            Assert.NotNull(resultApiKey);
-            Assert.Equal(apiKeyValue, resultApiKey.ApiKeyValue);
-            Assert.Equal(description, resultApiKey.Description);
-            Assert.Equal(isActive, resultApiKey.Status);
-            Assert.Equal(tenantId, resultApiKey.TenantId);
+            NUnit.Framework.Assert.IsNotNull(resultApiKey);
+            NUnit.Framework.Assert.AreEqual(apiKeyValue, resultApiKey.ApiKeyValue);
+            NUnit.Framework.Assert.AreEqual(description, resultApiKey.Description);
+            NUnit.Framework.Assert.AreEqual(isActive, resultApiKey.Status);
+            NUnit.Framework.Assert.AreEqual(tenantId, resultApiKey.TenantId);
 
-            Assert.Contains(tenant.ApiKeys, k => k.ApiKeyValue == apiKeyValue);
+            NUnit.Framework.Assert.IsTrue(tenant.ApiKeys.Any(k => k.ApiKeyValue == apiKeyValue));
 
-            Assert.Contains(tenant.DomainEvents, ev => ev is TenantApiKeyAddedEvent);
+            NUnit.Framework.Assert.IsTrue(tenant.DomainEvents.Any(ev => ev is TenantApiKeyAddedEvent));
             var apiKeyAddedEvent = tenant.DomainEvents.OfType<TenantApiKeyAddedEvent>().FirstOrDefault();
-            Assert.NotNull(apiKeyAddedEvent);
-            Assert.Equal(tenant, apiKeyAddedEvent.Tenant);
-            Assert.Equal(resultApiKey, apiKeyAddedEvent.ApiKey);
+            NUnit.Framework.Assert.IsNotNull(apiKeyAddedEvent);
+            NUnit.Framework.Assert.AreEqual(tenant, apiKeyAddedEvent.Tenant);
+            NUnit.Framework.Assert.AreEqual(resultApiKey, apiKeyAddedEvent.ApiKey);
 
-            _mockTenantRepository.Verify(repo => repo.Update(tenant), Times.Once);
+            _mockTenantRepository.Verify(repo => repo.Addapikey(It.Is<TenantApiKey>(tak => tak.ApiKeyValue == apiKeyValue)), Times.Once);
             _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [Fact]
-        public async Task AddApiKeyAsync_Should_ThrowTenantNotFoundException_WhenTenantDoesNotExist()
+        [Test]
+        public void AddApiKeyAsync_Should_ThrowTenantNotFoundException_WhenTenantDoesNotExist()
         {
             // Arrange
             var tenantId = Guid.NewGuid();
@@ -83,15 +84,15 @@ namespace ThreeTP.Payment.Application.Tests.Services
             _mockTenantRepository.Setup(repo => repo.GetByIdAsync(tenantId)).ReturnsAsync((Tenant)null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<TenantNotFoundException>(() => _tenantService.AddApiKeyAsync(tenantId, apiKeyValue, description, isActive));
+            NUnit.Framework.Assert.ThrowsAsync<TenantNotFoundException>(async () => await _tenantService.AddApiKeyAsync(tenantId, apiKeyValue, description, isActive));
 
             _mockTenantRepository.Verify(repo => repo.GetByIdAsync(tenantId), Times.Once);
-            _mockTenantRepository.Verify(repo => repo.Update(It.IsAny<Tenant>()), Times.Never);
+            _mockTenantRepository.Verify(repo => repo.Addapikey(It.IsAny<TenantApiKey>()), Times.Never);
             _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
-        [Fact]
-        public async Task AddApiKeyAsync_Should_RethrowInvalidTenantException_WhenTenantAddApiKeyThrows()
+        [Test]
+        public void AddApiKeyAsync_Should_RethrowInvalidTenantException_WhenTenantAddApiKeyThrows()
         {
             // Arrange
             var tenantId = Guid.NewGuid();
@@ -99,7 +100,7 @@ namespace ThreeTP.Payment.Application.Tests.Services
             var tenant = new Tenant("Test Service Company", "TSC02");
             tenant.TenantId = tenantId;
             tenant.AddApiKey(new TenantApiKey(existingApiKey, tenantId));
-            tenant.ClearDomainEvents(); // Assuming this helper exists on Tenant or BaseEntityWithEvents
+            tenant.ClearDomainEvents();
 
             var description = "Service Duplicate Key";
             var isActive = true;
@@ -107,10 +108,10 @@ namespace ThreeTP.Payment.Application.Tests.Services
             _mockTenantRepository.Setup(repo => repo.GetByIdAsync(tenantId)).ReturnsAsync(tenant);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidTenantException>(() => _tenantService.AddApiKeyAsync(tenantId, existingApiKey, description, isActive));
+            NUnit.Framework.Assert.ThrowsAsync<InvalidTenantException>(async () => await _tenantService.AddApiKeyAsync(tenantId, existingApiKey, description, isActive));
 
             _mockTenantRepository.Verify(repo => repo.GetByIdAsync(tenantId), Times.Once);
-            _mockTenantRepository.Verify(repo => repo.Update(It.IsAny<Tenant>()), Times.Never);
+            _mockTenantRepository.Verify(repo => repo.Addapikey(It.IsAny<TenantApiKey>()), Times.Never);
             _mockUnitOfWork.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }

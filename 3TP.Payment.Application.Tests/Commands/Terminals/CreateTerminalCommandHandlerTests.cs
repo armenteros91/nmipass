@@ -10,40 +10,42 @@ using ThreeTP.Payment.Application.DTOs.Requests.Terminals;
 using ThreeTP.Payment.Application.DTOs.Responses.Terminals;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
-using ThreeTP.Payment.Domain.Exceptions; // For TenantNotFoundException
-using ThreeTP.Payment.Application.Commands.AwsSecrets; // For CreateSecretCommand
-using Amazon.SecretsManager.Model; // For CreateSecretResponse
-using Amazon.SecretsManager; // For AmazonSecretsManagerException
+using ThreeTP.Payment.Domain.Exceptions;
+using ThreeTP.Payment.Application.Commands.AwsSecrets;
+using Amazon.SecretsManager.Model;
+using Amazon.SecretsManager;
+using ThreeTP.Payment.Application.Interfaces.aws;
+using ThreeTP.Payment.Application.Interfaces.Tenants;
+using ThreeTP.Payment.Application.Interfaces.Terminals;
 
 namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
 {
     [TestFixture]
     public class CreateTerminalCommandHandlerTests
     {
-        private Mock<ITerminalRepository> _terminalRepositoryMock;
-        private Mock<ITenantRepository> _tenantRepositoryMock;
+        private Mock<ThreeTP.Payment.Application.Interfaces.Terminals.ITerminalRepository> _terminalRepositoryMock;
+        private Mock<ThreeTP.Payment.Application.Interfaces.Tenants.ITenantRepository> _tenantRepositoryMock;
         private Mock<IUnitOfWork> _unitOfWorkMock;
         private Mock<IMapper> _mapperMock;
-        private Mock<IAwsSecretManagerService> _mockAwsSecretManagerService; // New Mock
+        private Mock<IAwsSecretManagerService> _mockAwsSecretManagerService;
         private CreateTerminalCommandHandler _handler;
 
         [SetUp]
         public void SetUp()
         {
-            _terminalRepositoryMock = new Mock<ITerminalRepository>();
-            _tenantRepositoryMock = new Mock<ITenantRepository>();
+            _terminalRepositoryMock = new Mock<ThreeTP.Payment.Application.Interfaces.Terminals.ITerminalRepository>();
+            _tenantRepositoryMock = new Mock<ThreeTP.Payment.Application.Interfaces.Tenants.ITenantRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
-            _mockAwsSecretManagerService = new Mock<IAwsSecretManagerService>(); // Initialize new mock
+            _mockAwsSecretManagerService = new Mock<IAwsSecretManagerService>();
 
-            // Setup IUnitOfWork to return mocked repositories
             _unitOfWorkMock.Setup(uow => uow.TenantRepository).Returns(_tenantRepositoryMock.Object);
             _unitOfWorkMock.Setup(uow => uow.TerminalRepository).Returns(_terminalRepositoryMock.Object);
 
             _handler = new CreateTerminalCommandHandler(
                 _unitOfWorkMock.Object,
                 _mapperMock.Object,
-                _mockAwsSecretManagerService.Object // Pass the new mock to the handler
+                _mockAwsSecretManagerService.Object
             );
         }
 
@@ -69,20 +71,17 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                  .Callback<Terminal>(t => capturedTerminal = t)
                 .Returns(Task.CompletedTask);
 
-
-            // Simulate successful secret creation for this old test case,
-            // as the handler now depends on it.
             _mockAwsSecretManagerService
                 .Setup(s => s.CreateSecretAsync(It.IsAny<CreateSecretCommand>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new CreateSecretResponse { ARN = "arn:aws:secretsmanager:us-east-1:123456789012:secret:MySecret-123456" });
 
             _mapperMock.Setup(m => m.Map<TerminalResponseDto>(It.IsAny<Terminal>()))
                 .Returns((Terminal src) => new TerminalResponseDto {
-                    TerminalId = src.Id,
+                    TerminalId = src.TerminalId,
                     Name = src.Name,
                     TenantId = src.TenantId,
-                    IsActive = true, // Assuming default
-                    CreatedDate = DateTime.UtcNow // Assuming default
+                    IsActive = true,
+                    CreatedDate = DateTime.UtcNow
                 });
 
             // Act
@@ -93,16 +92,17 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             result.Name.Should().Be(createTerminalRequestDto.Name);
             result.TenantId.Should().Be(createTerminalRequestDto.TenantId);
             result.TerminalId.Should().NotBeEmpty();
-            result.TerminalId.Should().Be(capturedTerminal.Id);
-
+            NUnit.Framework.Assert.IsNotNull(capturedTerminal);
+            if (capturedTerminal != null)
+            {
+                result.TerminalId.Should().Be(capturedTerminal.TerminalId);
+            }
 
             _terminalRepositoryMock.Verify(r => r.AddAsync(It.Is<Terminal>(t =>
                 t.Name == createTerminalRequestDto.Name &&
-                t.TenantId == createTerminalRequestDto.TenantId &&
-                t.SecretKey == createTerminalRequestDto.SecretKey // SecretKey is not encrypted in domain entity anymore
+                t.TenantId == createTerminalRequestDto.TenantId
             )), Times.Once);
-            // _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once); // This is no longer called directly
-            _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(It.IsAny<CreateSecretCommand>(), It.IsAny<CancellationToken>()), Times.Once); // Verify secret creation was called
+            _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(It.IsAny<CreateSecretCommand>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             var command = new CreateTerminalCommand(createTerminalRequestDto);
 
             _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId))
-                .ReturnsAsync((Tenant)null); // Tenant not found
+                .ReturnsAsync((Tenant)null);
 
             // Act & Assert
             Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None);
@@ -128,8 +128,7 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                 .WithMessage($"Tenant with ID {tenantId} not found.");
 
             _terminalRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Terminal>()), Times.Never);
-            // _unitOfWorkMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never); // This is no longer called
-            _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(It.IsAny<CreateSecretCommand>(), It.IsAny<CancellationToken>()), Times.Never); // Secret creation should not be called
+            _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(It.IsAny<CreateSecretCommand>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
@@ -146,8 +145,8 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(tenant);
 
             Terminal capturedTerminal = null;
-            _mockTerminalRepository.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
-                .Callback<Terminal>(t => capturedTerminal = t) // Capture the terminal instance
+            _terminalRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
+                .Callback<Terminal>(t => capturedTerminal = t)
                 .Returns(Task.CompletedTask);
 
             _mockAwsSecretManagerService
@@ -155,26 +154,29 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                 .ReturnsAsync(new CreateSecretResponse { ARN = "arn:aws:secretsmanager:us-east-1:123456789012:secret:MySecret-123456" });
 
             _mapperMock.Setup(m => m.Map<TerminalResponseDto>(It.IsAny<Terminal>()))
-                .Returns((Terminal t) => new TerminalResponseDto { TerminalId = t.Id, Name = t.Name, TenantId = t.TenantId });
+                .Returns((Terminal t) => new TerminalResponseDto { TerminalId = t.TerminalId, Name = t.Name, TenantId = t.TenantId });
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            Assert.IsNotNull(capturedTerminal, "Terminal should have been captured by AddAsync callback.");
-            Assert.That(result.TerminalId, Is.EqualTo(capturedTerminal.Id));
-            Assert.That(result.TenantId, Is.EqualTo(tenantId));
-            Assert.That(result.Name, Is.EqualTo(terminalName));
+            NUnit.Framework.Assert.IsNotNull(capturedTerminal, "Terminal should have been captured by AddAsync callback.");
+            if (capturedTerminal != null)
+            {
+                NUnit.Framework.Assert.That(result.TerminalId, Is.EqualTo(capturedTerminal.TerminalId));
+                NUnit.Framework.Assert.That(result.TenantId, Is.EqualTo(tenantId));
+                NUnit.Framework.Assert.That(result.Name, Is.EqualTo(terminalName));
 
-            _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(
-                It.Is<CreateSecretCommand>(c =>
-                    c.Name == $"tenant/{tenantId}/terminal/{capturedTerminal.Id}/secretkey" &&
-                    c.SecretString == secretKey &&
-                    c.Description == $"Secret key for terminal {capturedTerminal.Id} of tenant {tenantId}" &&
-                    c.TerminalId == capturedTerminal.Id
-                ),
-                It.IsAny<CancellationToken>()),
-                Times.Once);
+                _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(
+                    It.Is<CreateSecretCommand>(c =>
+                        c.Name == $"tenant/{tenantId}/terminal/{capturedTerminal.TerminalId}/secretkey" &&
+                        c.SecretString == secretKey &&
+                        c.Description == $"Secret key for terminal {capturedTerminal.TerminalId} of tenant {tenantId}" &&
+                        c.TerminalId == capturedTerminal.TerminalId
+                    ),
+                    It.IsAny<CancellationToken>()),
+                    Times.Once);
+            }
         }
 
         [Test]
@@ -186,10 +188,10 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
             var command = new CreateTerminalCommand(requestDto);
             var expectedException = new AmazonSecretsManagerException("AWS fake error");
 
-            _mockTenantRepository.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(new Tenant("Test Tenant", "alias"));
+            _tenantRepositoryMock.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(new Tenant("Test Tenant", "alias"));
 
             Terminal capturedTerminal = null;
-            _mockTerminalRepository.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
+            _terminalRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Terminal>()))
                 .Callback<Terminal>(t => capturedTerminal = t)
                 .Returns(Task.CompletedTask);
 
@@ -198,13 +200,18 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Terminals
                 .ThrowsAsync(expectedException);
 
             // Act & Assert
-            var actualException = Assert.ThrowsAsync<AmazonSecretsManagerException>(async () => await _handler.Handle(command, CancellationToken.None));
-            Assert.That(actualException, Is.EqualTo(expectedException));
+            var actualException = NUnit.Framework.Assert.ThrowsAsync<AmazonSecretsManagerException>(async () => await _handler.Handle(command, CancellationToken.None));
+            NUnit.Framework.Assert.IsInstanceOf<AmazonSecretsManagerException>(actualException);
+            NUnit.Framework.Assert.AreEqual(expectedException.Message, actualException.Message);
 
-            _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(
-                It.Is<CreateSecretCommand>(c => c.TerminalId == capturedTerminal.Id ), // Verify with captured terminal Id
-                It.IsAny<CancellationToken>()),
-                Times.Once);
+            NUnit.Framework.Assert.IsNotNull(capturedTerminal);
+            if (capturedTerminal != null)
+            {
+                _mockAwsSecretManagerService.Verify(s => s.CreateSecretAsync(
+                    It.Is<CreateSecretCommand>(c => c.TerminalId == capturedTerminal.TerminalId),
+                    It.IsAny<CancellationToken>()),
+                    Times.Once);
+            }
         }
     }
 }
