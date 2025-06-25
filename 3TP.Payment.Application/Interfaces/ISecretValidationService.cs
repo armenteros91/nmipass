@@ -1,3 +1,5 @@
+using ThreeTP.Payment.Application.Queries.AwsSecrets;
+
 namespace ThreeTP.Payment.Application.Interfaces
 {
     public interface ISecretValidationService

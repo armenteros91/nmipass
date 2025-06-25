@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Application.Interfaces.aws;
+using ThreeTP.Payment.Application.Queries.AwsSecrets;
 
 namespace ThreeTP.Payment.Infrastructure.Services.Encryption
 {
@@ -37,7 +38,8 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
         {
             try
             {
-                var storedSecret = await _awsSecretManagerService.GetSecretValueAsync(secretId);
+                GetSecretValueQuery secretValueQuery = new GetSecretValueQuery(secretId);
+                var storedSecret = await _awsSecretManagerService.GetSecretValueAsync(secretValueQuery);
                 if (storedSecret == null)
                 {
                     _logger.LogWarning("Secret with ID {SecretId} not found in AWS Secrets Manager.", secretId);
