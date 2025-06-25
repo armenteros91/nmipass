@@ -49,12 +49,12 @@ public class PaymentService: IPaymentService
             throw new UnauthorizedAccessException("Invalid API Key or inactive tenant.");
         }
 
-        // 2. Setear dinámicamente el ApiKey del terminal en el Request
-        var apiKeyForTerminal = tenant.ApiKeys.FirstOrDefault(k => k.ApiKeyValue == apiKey)?.ApiKeyValue;
-        if (string.IsNullOrWhiteSpace(apiKeyForTerminal))
+        // 2. Validate the tenant's API key (already fetched tenant by this apiKey)
+        // and ensure the key is active.
+        if (tenant.ApiKey == null || tenant.ApiKey.ApiKeyValue != apiKey || !tenant.ApiKey.Status)
         {
-            _logger.LogWarning("API Key not found for Tenant ID: {TenantId}", tenant.TenantId);
-            throw new UnauthorizedAccessException("API Key not associated with this tenant.");
+            _logger.LogWarning("Tenant's API key does not match the provided key, is missing, or is inactive for Tenant ID: {TenantId}", tenant.TenantId);
+            throw new UnauthorizedAccessException("Invalid API Key or API Key not active for this tenant.");
         }
         
         // Obtener el terminal asociado al tenant
@@ -212,17 +212,44 @@ public class PaymentService: IPaymentService
             throw new UnauthorizedAccessException("Invalid API Key or inactive tenant.");
         }
 
-        // 2. Obtener ApiKey
-        var apiKeyForTerminal = tenant.ApiKeys.FirstOrDefault(k => k.ApiKeyValue == apiKey)?.ApiKeyValue;
-
-        if (string.IsNullOrWhiteSpace(apiKeyForTerminal))
+        // 2. Validate the tenant's API key and ensure it's active.
+        // Also, fetch the NMI Security Key for the terminal.
+        if (tenant.ApiKey == null || tenant.ApiKey.ApiKeyValue != apiKey || !tenant.ApiKey.Status)
         {
-            _logger.LogWarning("API Key not found for Tenant ID: {TenantId}", tenant.TenantId);
-            throw new UnauthorizedAccessException("API Key not associated with this tenant.");
+            _logger.LogWarning("Tenant's API key does not match the provided key, is missing, or is inactive for Tenant ID: {TenantId}", tenant.TenantId);
+            throw new UnauthorizedAccessException("Invalid API Key or API Key not active for this tenant.");
         }
 
-        //set terminalId para NMI
-        queryTransactionRequest.SecurityKey = apiKeyForTerminal;
+        if (tenant.Terminal == null)
+        {
+            _logger.LogWarning("Terminal not configured for Tenant ID: {TenantId}", tenant.TenantId);
+            throw new ApplicationException("Terminal not configured for this tenant.");
+        }
+
+        string nmiSecurityKey;
+        try
+        {
+            // Assuming the secret ID is derived or stored similarly to ProcessPaymentAsync
+            var secretIdForAws = $"terminals/{tenant.Terminal.TerminalId}/nmi_security_key"; // Adjust if necessary
+            _logger.LogInformation("Fetching NMI Security Key from AWS Secrets Manager for Secret ID: {SecretId} in QueryProcessPaymentAsync", secretIdForAws);
+
+            var secretValueResponse = await _awsSecretManagerService.GetSecretValueAsync(new GetSecretValueQuery(secretIdForAws));
+
+            if (secretValueResponse == null || string.IsNullOrWhiteSpace(secretValueResponse.SecretString))
+            {
+                _logger.LogWarning("NMI Security Key not found in AWS Secrets Manager for Secret ID: {SecretId}", secretIdForAws);
+                throw new ApplicationException("NMI Security Key not found in AWS Secrets Manager.");
+            }
+            nmiSecurityKey = secretValueResponse.SecretString;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving NMI Security Key for Terminal ID: {TerminalId} in QueryProcessPaymentAsync", tenant.Terminal.TerminalId);
+            throw new ApplicationException("Error retrieving NMI Security Key.", ex);
+        }
+
+        // Set NMI Security Key for the NMI request
+        queryTransactionRequest.SecurityKey = nmiSecurityKey;
 
         //enviar consulta a NMI 
         var response = await _nmiPaymentGateway.QueryAsync(queryTransactionRequest);
