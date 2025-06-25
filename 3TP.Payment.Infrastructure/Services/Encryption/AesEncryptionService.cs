@@ -88,19 +88,5 @@ namespace ThreeTP.Payment.Infrastructure.Services.Encryption
         {
             return Utils.ComputeSha256(input);
         }
-
-        public bool ValidateEncryption(string plainText, string encryptedText)
-        {
-            try
-            {
-                string newEncryptedText = Encrypt(plainText);
-                return newEncryptedText == encryptedText;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Validation of encryption failed");
-                return false;
-            }
-        }
     }
 }

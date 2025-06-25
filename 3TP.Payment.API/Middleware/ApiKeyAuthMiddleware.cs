@@ -1,5 +1,4 @@
-﻿using ThreeTP.Payment.Application.Interfaces;
-using ThreeTP.Payment.Application.Interfaces.Tenants;
+﻿using ThreeTP.Payment.Application.Interfaces.Tenants;
 
 namespace ThreeTP.Payment.API.Middleware
 {

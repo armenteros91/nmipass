@@ -12,7 +12,11 @@ public class Tenant : BaseEntityWithEvents
     public string CompanyCode { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; }
-    public string ApiKey { get; set; } = string.Empty; // New ApiKey property
+
+
+    //public IReadOnlyCollection<TenantApiKey> ApiKeys => _apiKeys.AsReadOnly();
+    //MODIFIED: Changed from ICollection<TenantApiKey> to TenantApiKey?
+    public TenantApiKey? ApiKey { get; set; }
 
     // Changed from ICollection<Terminal> to Terminal?
     [JsonIgnore]
@@ -35,7 +39,6 @@ public class Tenant : BaseEntityWithEvents
         CompanyName = companyName.Trim();
         CompanyCode = companyCode.Trim().ToUpper();
         IsActive = true;
-        // ApiKey will be set by the command handler after tenant creation.
     }
 
     public void Activate()
@@ -52,5 +55,16 @@ public class Tenant : BaseEntityWithEvents
         IsActive = false;
         AddDomainEvent(TenantDeactivatedEvent.Create(this));
         
+    }
+
+    //MODIFIED: Updated to handle a single API key
+    public void AddApiKey(TenantApiKey apiKey)
+    {
+        if (apiKey == null)
+            throw new InvalidTenantException(nameof(apiKey), "API key cannot be null");
+
+        // Overwrite existing key if one is present
+        ApiKey = apiKey;
+        AddDomainEvent(TenantApiKeyAddedEvent.Create(this, apiKey));
     }
 }

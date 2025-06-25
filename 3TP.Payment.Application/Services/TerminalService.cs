@@ -64,34 +64,46 @@ namespace ThreeTP.Payment.Application.Services
             return await _mediator.Send(new UpdateTerminalCommand(terminalId, updateRequest));
         }
 
-        public async Task<bool> UpdateTerminalAndSecretAsync(UpdateTerminalCommand terminalCommand,
-            string? newSecretString, string? secretId, string? description, CancellationToken cancellationToken)
+        /// <summary>
+        /// actualiza un secreto asociado a un Terminal
+        /// </summary>
+        /// <param name="terminalId"></param>
+        /// <param name="updateRequest"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdateTerminalAndSecretAsync(Guid terminalId,
+            UpdateTerminalAndSecretRequest updateRequest, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Starting coordinated update for TerminalId: {TerminalId}",
-                terminalCommand.TerminalId);
+            _logger.LogInformation("Starting coordinated update for TerminalId: {TerminalId}", terminalId);
 
-            // 1. Actualizar la terminal
-            var terminalUpdated = await _mediator.Send(terminalCommand, cancellationToken);
-
-            if (!terminalUpdated)
+            var terminal = await _unitOfWork.TerminalRepository.GetByIdAsync(terminalId);
+            if (terminal == null)
             {
-                _logger.LogWarning("Terminal update failed for TerminalId: {TerminalId}", terminalCommand.TerminalId);
+                _logger.LogWarning("Terminal with ID {TerminalId} not found");
                 return false;
             }
 
-            // 2. Si hay un nuevo secreto, actualizar en AWS
-            if (!string.IsNullOrWhiteSpace(newSecretString) && !string.IsNullOrWhiteSpace(secretId))
+            var terminalCommand = new UpdateTerminalCommand(terminalId, updateRequest);
+
+            var terminalUpdated = await _mediator.Send(terminalCommand, cancellationToken);
+            if (!terminalUpdated)
+            {
+                _logger.LogWarning("Terminal update failed for TerminalId: {TerminalId}", terminalId);
+                return false;
+            }
+
+            if (updateRequest.SecretUpdate is { NewSecretString: not null, SecretId: not null })
             {
                 var updateSecretCommand = new UpdateSecretCommand
                 {
-                    SecretId = secretId,
-                    NewSecretString = newSecretString,
-                    Description = description,
-                    TerminalId = terminalCommand.TerminalId
+                    SecretId = updateRequest.SecretUpdate.SecretId,
+                    NewSecretString = updateRequest.SecretUpdate.NewSecretString,
+                    Description = updateRequest.SecretUpdate.SecretDescription,
+                    TerminalId = terminalId
                 };
 
                 await _mediator.Send(updateSecretCommand, cancellationToken);
-                _logger.LogInformation("Secret updated for TerminalId: {TerminalId}", terminalCommand.TerminalId);
+                _logger.LogInformation("Secret updated for TerminalId: {TerminalId}", terminalId);
             }
 
             return true;

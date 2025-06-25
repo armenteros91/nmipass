@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.Tenants;
 using ThreeTP.Payment.Application.DTOs.Requests.Tenants;
 using ThreeTP.Payment.Application.Queries.Tenants;
-using ThreeTP.Payment.Domain.Entities.Tenant;
+using ThreeTP.Payment.Domain.Entities.Tenant; // Assuming Tenant entity is returned by some queries/commands
 
 namespace ThreeTP.Payment.API.Controller;
 
@@ -27,17 +27,17 @@ public class TenantsController : ControllerBase
         Ok(await _mediator.Send(new GetTenantByIdQuery(tenantId)));
 
     /// <summary>
-    /// Creates a new tenant. An API key will be automatically generated.
+    /// Creates a new tenant.
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTenantRequest request)
     {
         var tenant = await _mediator.Send(new CreateTenantCommand(request.CompanyName, request.CompanyCode));
-        return CreatedAtAction(nameof(GetById), new { tenantId = tenant.TenantId }, tenant);
+        return CreatedAtAction(nameof(GetById), new { tenantId = tenant.TenantId }, tenant); // Assuming tenant.Id is the ID
     }
 
     /// <summary>
-    /// Updates an existing tenant's company name and code. API key is not changed here.
+    /// Updates an existing tenant.
     /// </summary>
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateTenantRequest request)
@@ -45,24 +45,6 @@ public class TenantsController : ControllerBase
         await _mediator.Send(new UpdateTenantCommand(request.TenantId, request.CompanyName, request.CompanyCode));
         return NoContent();
     }
-
-    /// <summary>
-    /// Updates the API key for a specific tenant.
-    /// </summary>
-    /// <param name="tenantId">The ID of the tenant to update.</param>
-    /// <param name="request">Request containing the new API key.</param>
-    /// <returns>The updated tenant information.</returns>
-    [HttpPut("{tenantId:guid}/apikey")]
-    public async Task<IActionResult> UpdateApiKey(Guid tenantId, [FromBody] UpdateTenantApiKeyRequest request)
-    {
-        if (tenantId != request.TenantId)
-        {
-            return BadRequest("Tenant ID in URL must match Tenant ID in request body.");
-        }
-        var tenant = await _mediator.Send(new UpdateTenantApiKeyCommand(request.TenantId, request.NewApiKey));
-        return Ok(tenant);
-    }
-
     /// <summary>
     /// Changes the active status of a tenant.
     /// </summary>

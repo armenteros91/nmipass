@@ -50,6 +50,7 @@ public static class PaymentInfrastructureExtensions
 
         // Add encryption service
         services.AddScoped<IEncryptionService, AesEncryptionService>();
+        services.AddScoped<ISecretValidationService, SecretValidationService>();
 
         // Add AutoMapper with NMI mapping profile
         services.AddAutoMapper(typeof(NmiMappingProfile).Assembly);

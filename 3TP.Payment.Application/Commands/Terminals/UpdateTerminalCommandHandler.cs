@@ -46,14 +46,14 @@ public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalComman
                 var dto = request.UpdateRequest;
 
                 bool updated = terminal.Update(
-                    name: dto.SecretDescription,
+                    name: dto.SecretUpdate?.SecretDescription,
                     isActive: dto.TerminalUpdate.IsActive,
                     apiKey: dto.TerminalUpdate.ApiKey,
                     encrypt: _encryptionService.Encrypt,
                     hash: _encryptionService.Hash
                 );
 
-                if (updated  && dto.TerminalUpdate.ApiKey != null)
+                if (updated)
                 {
                     _logger.LogInformation("Terminal with ID {TerminalId} updated successfully", request.TerminalId);
                     _unitOfWork.TerminalRepository.Update(terminal);
@@ -75,6 +75,6 @@ public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalComman
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 throw;
             }
-        });
+       });
     }
 }

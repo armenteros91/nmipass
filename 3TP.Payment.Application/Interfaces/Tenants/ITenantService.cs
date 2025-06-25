@@ -52,17 +52,5 @@ namespace ThreeTP.Payment.Application.Interfaces.Tenants
         /// <param name="tenantId">ID del tenant</param>
         /// <param name="isActive">Nuevo estado</param>
         Task SetActiveStatusAsync(Guid tenantId, bool isActive);
-
-        // Task<TenantApiKey> AddApiKeyAsync(Guid tenantId, string apiKeyValue, string? description, bool isActive); // Removed
-
-        /// <summary>
-        /// Actualiza la API Key de un tenant existente.
-        /// </summary>
-        /// <param name="tenantId">ID del tenant a actualizar.</param>
-        /// <param name="newApiKey">La nueva API Key para el tenant.</param>
-        /// <returns>El tenant actualizado.</returns>
-        /// <exception cref="TenantNotFoundException">Si el tenant con el ID especificado no se encuentra.</exception>
-        /// <exception cref="ArgumentException">Si la nueva API key es inválida (null o vacía).</exception>
-        Task<Tenant> UpdateTenantApiKeyAsync(Guid tenantId, string newApiKey); // Added for updating API key
     }
 }

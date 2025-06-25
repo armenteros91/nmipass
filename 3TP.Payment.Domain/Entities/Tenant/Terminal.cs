@@ -36,6 +36,11 @@ namespace ThreeTP.Payment.Domain.Entities.Tenant
             SecretKeyEncrypted = secretKey; // Será encriptado por el repositorio
         }
 
+
+        /// <summary>
+        /// Updates terminal fields if the provided values differ from current ones.
+        /// Returns true if any change was made (name, isActive or apiKey).
+        /// </summary>
         public bool Update(string? name, bool? isActive, string? apiKey, Func<string, string> encrypt,
             Func<string, string> hash)
         {
