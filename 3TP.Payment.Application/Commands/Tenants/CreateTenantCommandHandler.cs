@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using ThreeTP.Payment.Application.Helpers;
-using ThreeTP.Payment.Application.Interfaces.Tenants;
+// using ThreeTP.Payment.Application.Interfaces.Tenants; // ITenantService no longer needed for AddApiKeyAsync
 using ThreeTP.Payment.Domain.Events.TenantEvent;
 
 namespace ThreeTP.Payment.Application.Commands.Tenants
@@ -15,14 +15,13 @@ namespace ThreeTP.Payment.Application.Commands.Tenants
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<CreateTenantCommandHandler> _logger;
-        private readonly ITenantService _tenantService;
+        // private readonly ITenantService _tenantService; // No longer needed for AddApiKeyAsync
 
-        public CreateTenantCommandHandler(IUnitOfWork unitOfWork, ILogger<CreateTenantCommandHandler> logger,
-            ITenantService tenantService)
+        public CreateTenantCommandHandler(IUnitOfWork unitOfWork, ILogger<CreateTenantCommandHandler> logger) // ITenantService removed
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
-            _tenantService = tenantService;
+            // _tenantService = tenantService; // No longer needed
         }
 
         public async Task<Tenant> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
@@ -36,29 +35,27 @@ namespace ThreeTP.Payment.Application.Commands.Tenants
 
             var tenant = new Tenant(request.CompanyName, request.CompanyCode);
 
+            // Generate API Key and assign it directly to the tenant
+            var apiKey = Utils.GenerateApiKey();
+            tenant.ApiKey = apiKey; // Assign generated ApiKey
+
             try
             {
                 await _unitOfWork.TenantRepository.AddAsync(tenant);
 
-                // Generate API Key and add it to the tenant
-                var apiKey = Utils.GenerateApiKey();
-
-                var tenantApiKey = new TenantApiKey(apiKey, tenant.TenantId);
-                await _tenantService.AddApiKeyAsync(tenant.TenantId, apiKey, "ApiKey for " + tenant.CompanyName, true);
-
+                // Domain event for tenant activation
                 tenant.AddDomainEvent(TenantActivatedEvent.Create(tenant));
 
                 await _unitOfWork.CommitAsync(cancellationToken);
 
                 _logger.LogInformation(
                     "Tenant {CompanyName} created successfully with Id {TenantId} and APIKey {ApiKey}",
-                    tenant.CompanyName, tenant.TenantId, apiKey);
+                    tenant.CompanyName, tenant.TenantId, tenant.ApiKey); // Log tenant.ApiKey
                 return tenant;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating tenant {CompanyName}", request.CompanyName);
-
                 throw;
             }
         }

@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using ThreeTP.Payment.Domain.Commons;
 using ThreeTP.Payment.Domain.Entities.Nmi;
 using ThreeTP.Payment.Domain.Entities.Payments;
-using ThreeTP.Payment.Domain.Entities.Tenant;
+using ThreeTP.Payment.Domain.Entities.Tenant; // Tenant is used
+// TenantApiKey is no longer used directly here for DbSet
+
 using ThreeTP.Payment.Infrastructure.Persistence.Configurations;
 
 namespace ThreeTP.Payment.Infrastructure.Persistence;
@@ -12,7 +14,7 @@ public class NmiDbContext : DbContext
     public DbSet<NmiTransactionRequestLog> NmiRequestLogs { get; set; }
     public DbSet<NmiTransactionResponseLog> NmiResponseLogs { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<TenantApiKey> ApiKeys { get; set; }
+    // public DbSet<TenantApiKey> ApiKeys { get; set; } // Removed
     public DbSet<Terminal> Terminals { get; set; }
     public DbSet<Transactions> Transactions { get; set; }
     public DbSet<TransactionResponse> TransactionResponse { get; set; }
@@ -31,7 +33,7 @@ public class NmiDbContext : DbContext
 
         // Tenant schema
         modelBuilder.Entity<Tenant>().ToTable(nameof(Tenant), "Tenant");
-        modelBuilder.Entity<TenantApiKey>().ToTable("ApiKeys", "Tenant");
+        // modelBuilder.Entity<TenantApiKey>().ToTable("ApiKeys", "Tenant"); // Removed
         modelBuilder.Entity<Terminal>().ToTable(nameof(Terminal), "Tenant");
 
         // Payment schema
@@ -66,7 +68,7 @@ public class NmiDbContext : DbContext
         // Apply entity configurations
         modelBuilder.ApplyConfiguration(new TenantConfiguration());
         modelBuilder.ApplyConfiguration(new TerminalConfiguration());
-        modelBuilder.ApplyConfiguration(new TenantApiKeyConfiguration());
+        // modelBuilder.ApplyConfiguration(new TenantApiKeyConfiguration()); // Removed
 
         modelBuilder.ApplyConfiguration(new TransactionConfiguration());
         modelBuilder.ApplyConfiguration(new TransactionTypeConfiguration());
