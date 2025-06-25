@@ -24,9 +24,6 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasMaxLength(10)
             .IsRequired();
 
-        builder.HasIndex(e => e.CompanyCode)
-            .IsUnique();
-
         builder.Property(e => e.Description)
             .HasMaxLength(200)
             .IsRequired(false);
@@ -34,14 +31,6 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(e => e.IsActive)
             .IsRequired()
             .HasDefaultValue(true);
-
-        builder.Property(e => e.ApiKey)
-            .HasMaxLength(255) // Standard length for API keys
-            .IsRequired(true); // Assuming API key is mandatory once set
-
-        builder.HasIndex(e => e.ApiKey)
-            .IsUnique();
-
 
         // builder.Property(e => e.CreatedDate)
         //     .IsRequired()

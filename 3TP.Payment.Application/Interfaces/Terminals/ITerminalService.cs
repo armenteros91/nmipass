@@ -11,9 +11,12 @@ namespace ThreeTP.Payment.Application.Interfaces.Terminals
         Task<Terminal?> FindBySecretNameAsync(string plainSecretName);
         Task<TerminalResponseDto> CreateTerminalAsync(CreateTerminalRequestDto createRequest);
         Task<TerminalResponseDto?> GetTerminalByIdAsync(Guid terminalId);
-        Task<TerminalResponseDto?> GetTerminalByTenantIdAsync(Guid tenantId); 
+        Task<TerminalResponseDto?> GetTerminalByTenantIdAsync(Guid tenantId);
         Task<bool> UpdateTerminalAsync(Guid terminalId, UpdateTerminalAndSecretRequest updateRequest);
-        Task<bool> UpdateTerminalAndSecretAsync(UpdateTerminalCommand terminalCommand, string? newSecretString, string? secretId, string? description, CancellationToken cancellationToken);
+
+        Task<bool> UpdateTerminalAndSecretAsync(Guid terminalId, UpdateTerminalAndSecretRequest updateRequest,
+            CancellationToken cancellationToken);
+
         Task<List<TerminalResponseDto>> GetAllTerminalsAsync();
     }
 }

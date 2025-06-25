@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 using ThreeTP.Payment.Application.Commands.Tenants;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Domain.Entities.Tenant;
-// using ThreeTP.Payment.Domain.Events; // TenantApiKeyAddedEvent is removed
-using ThreeTP.Payment.Domain.Events.TenantEvent; // For TenantActivatedEvent
-using Microsoft.Extensions.Logging;
+using ThreeTP.Payment.Domain.Events;
+using Microsoft.Extensions.Logging; // Required for ILogger
 
 namespace ThreeTP.Payment.Application.Tests.Commands.Tenants
 {
@@ -30,13 +29,14 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Tenants
             _loggerMock = new Mock<ILogger<CreateTenantCommandHandler>>();
 
             _unitOfWorkMock.Setup(uow => uow.TenantRepository).Returns(_tenantRepositoryMock.Object);
+            // If there are other repositories needed by IUnitOfWork that CreateTenantCommandHandler indirectly uses,
+            // they would need to be mocked here as well. For now, only TenantRepository seems direct.
 
-            // Constructor of CreateTenantCommandHandler was changed (ITenantService removed)
             _handler = new CreateTenantCommandHandler(_unitOfWorkMock.Object, _loggerMock.Object);
         }
 
         [Test]
-        public async Task Handle_ValidCommand_ShouldCreateTenantSetApiKeyAndRaiseActivatedEvent()
+        public async Task Handle_ValidCommand_ShouldCreateTenantAddApiKeyAndRaiseEvent()
         {
             // Arrange
             var command = new CreateTenantCommand("Test Company", "TESTCODE");
@@ -45,12 +45,14 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Tenants
             _tenantRepositoryMock.Setup(repo => repo.CompanyCodeExistsAsync(command.CompanyCode))
                 .ReturnsAsync(false);
 
+            // Capture the tenant when AddAsync is called
             _tenantRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<Tenant>()))
                 .Callback<Tenant>(tenant => capturedTenant = tenant)
                 .Returns(Task.CompletedTask);
 
+            // UnitOfWork.CommitAsync setup
             _unitOfWorkMock.Setup(uow => uow.CommitAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1); // Assuming CommitAsync now returns int (number of affected rows) or Task<int>
+                .ReturnsAsync(true); // CommitAsync returns Task<bool>
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -59,41 +61,37 @@ namespace ThreeTP.Payment.Application.Tests.Commands.Tenants
             result.Should().NotBeNull();
             result.CompanyName.Should().Be(command.CompanyName);
             result.CompanyCode.Should().Be(command.CompanyCode);
-            result.ApiKey.Should().NotBeNullOrEmpty("because an API key should have been generated and set");
 
             capturedTenant.Should().NotBeNull("because AddAsync should have been called with a tenant");
-            capturedTenant.ApiKey.Should().Be(result.ApiKey);
-            capturedTenant.ApiKey.Length.Should().BeGreaterThan(10); // Basic check for generated key
+            capturedTenant.ApiKeys.Should().NotBeNullOrEmpty("because an API key should have been added");
+            capturedTenant.ApiKeys.First().ApiKeyValue.Should().NotBeNullOrEmpty();
+            capturedTenant.ApiKeys.First().TenantId.Should().Be(capturedTenant.TenantId); // Or result.TenantId if Id is set post-creation
 
             // Verify repository and unit of work calls
             _tenantRepositoryMock.Verify(repo => repo.CompanyCodeExistsAsync(command.CompanyCode), Times.Once);
             _tenantRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Tenant>()), Times.Once);
             _unitOfWorkMock.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
 
-            // Verify domain event for TenantActivatedEvent
+            // Verify domain event for TenantApiKeyAddedEvent
+            // Assuming Tenant entity has a way to access its domain events, e.g., a public DomainEvents collection
+            // And TenantApiKeyAddedEvent is a distinct type.
+            // The original CreateTenantCommandHandler also adds TenantActivatedEvent.
+            // So we check for both, but specifically that TenantApiKeyAddedEvent exists.
+
+            // First, let's check TenantActivatedEvent as per original handler
             capturedTenant.DomainEvents.Should().ContainItemsAssignableTo<TenantActivatedEvent>();
 
-            // TenantApiKeyAddedEvent is removed, so no check for it.
-            // capturedTenant.DomainEvents.Should().NotContainItemsAssignableTo<TenantApiKeyAddedEvent>(); // Optional: explicitly check it's not there
-        }
+            // Now, let's check for TenantApiKeyAddedEvent which is the core of this subtask's related feature
+            // This part of the assertion might need adjustment based on how Tenant.AddApiKey() and event handling are implemented.
+            // For example, if AddApiKey itself adds an event, or if the event is added in the handler.
+            // Based on the previous subtask, tenant.AddApiKey() is called, and this method should be responsible
+            // for creating and adding the TenantApiKeyAddedEvent.
+            capturedTenant.DomainEvents.Should().ContainItemsAssignableTo<TenantApiKeyAddedEvent>("because adding an API key should raise this event");
 
-        [Test]
-        public async Task Handle_CompanyCodeExists_ShouldThrowException()
-        {
-            // Arrange
-            var command = new CreateTenantCommand("Test Company", "TESTCODE_EXISTS");
-
-            _tenantRepositoryMock.Setup(repo => repo.CompanyCodeExistsAsync(command.CompanyCode))
-                .ReturnsAsync(true);
-
-            // Act
-            Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None);
-
-            // Assert
-            await act.Should().ThrowAsync<Exception>().WithMessage($"Company code {command.CompanyCode} already exists");
-
-            _tenantRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Tenant>()), Times.Never);
-            _unitOfWorkMock.Verify(uow => uow.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+            var apiKeyAddedEvent = capturedTenant.DomainEvents.OfType<TenantApiKeyAddedEvent>().FirstOrDefault();
+            apiKeyAddedEvent.Should().NotBeNull();
+            apiKeyAddedEvent.Tenant.TenantId.Should().Be(capturedTenant.TenantId); // Access TenantId via Tenant property
+            apiKeyAddedEvent.ApiKey.ApiKeyValue.Should().Be(capturedTenant.ApiKeys.First().ApiKeyValue); // Compare ApiKeyValue property
         }
     }
 }

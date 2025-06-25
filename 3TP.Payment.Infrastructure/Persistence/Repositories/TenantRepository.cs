@@ -1,7 +1,8 @@
-using Microsoft.EntityFrameworkCore; // Required for Include
 using Microsoft.Extensions.Logging;
+using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Application.Interfaces.Tenants;
 using ThreeTP.Payment.Domain.Entities.Tenant;
+using Tenant = ThreeTP.Payment.Domain.Entities.Tenant.Tenant;
 
 namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 {
@@ -19,21 +20,22 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<Tenant?> GetByIdAsync(Guid id) =>
-            await GetOneAsync(t => t.TenantId == id, query => query.Include(t => t.Terminal));
+        public async Task<Tenant?> GetByIdAsync(Guid id) => await GetOneAsync(t => t.TenantId == id);
 
-        public Task<Tenant?> GetByApiKeyAsync(string apiKey) =>
-            GetOneAsync(t => t.ApiKey == apiKey, query => query.Include(t => t.Terminal));
-
+        public Task<Tenant?> GetByApiKeyAsync(string apiKey) => GetOneAsync(t => t.ApiKeys.Equals(apiKey));
 
         public async Task<bool> CompanyCodeExistsAsync(string companyCode) =>
-            await ExistsAsync(tenant => tenant.CompanyCode == companyCode);
+            await ExistsAsync(tenant => tenant.CompanyCode==companyCode);
 
         public void Update(Tenant tenant)
         {
             _context.Update(tenant); // track for save entity
         }
 
-        // Addapikey method removed as TenantApiKey entity and its direct repository manipulation are gone.
+        public void Addapikey(TenantApiKey tenantApiKey)
+        {
+            _context.Add(tenantApiKey);
+        }
     }
+
 }

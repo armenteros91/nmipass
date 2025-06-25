@@ -13,6 +13,7 @@ namespace ThreeTP.Payment.Application.Services
     public sealed class AwsSecretManagerService : IAwsSecretManagerService
     {
         private readonly IAmazonSecretsManager _secretsManager;
+        private readonly IAwsSecretsProvider _awsSecretsProvider;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMemoryCache _cache;
         private readonly ILogger<AwsSecretManagerService> _logger;
@@ -24,11 +25,13 @@ namespace ThreeTP.Payment.Application.Services
             IUnitOfWork unitOfWork,
             IMemoryCache cache,
             ILogger<AwsSecretManagerService> logger,
+            IAwsSecretsProvider awsSecretsProvider,
             TimeSpan? cacheDuration = null)
         {
             _secretsManager = secretsManager ?? throw new ArgumentNullException(nameof(secretsManager));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _awsSecretsProvider = awsSecretsProvider;
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _cacheOptions = new MemoryCacheEntryOptions
             {
@@ -121,7 +124,12 @@ namespace ThreeTP.Payment.Application.Services
             }
         }
 
-
+        /// <summary>
+        /// actualiza secretos en el aws 
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<UpdateSecretResponse> UpdateSecretAsync(
             UpdateSecretCommand command,
             CancellationToken cancellationToken = default)
@@ -140,7 +148,7 @@ namespace ThreeTP.Payment.Application.Services
                     Description = command.Description
                 };
 
-                var response = await _secretsManager.UpdateSecretAsync(updateRequest, cancellationToken);
+                var response = await _awsSecretsProvider.UpdateSecretAsync(updateRequest.SecretId,updateRequest.SecretString,updateRequest.Description, cancellationToken);
 
                 // 2. Actualizar en base de datos si corresponde
                 if (command.TerminalId.HasValue)

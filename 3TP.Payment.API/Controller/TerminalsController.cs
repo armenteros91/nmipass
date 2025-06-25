@@ -11,10 +11,10 @@ namespace ThreeTP.Payment.API.Controller;
 public class TerminalsController : ControllerBase
 {
     private readonly ITerminalService _terminalService;
-    private readonly ILogger<TerminalsController> _logger; 
+    private readonly ILogger<TerminalsController> _logger;
 
     public TerminalsController(
-        ITerminalService terminalService, 
+        ITerminalService terminalService,
         ILogger<TerminalsController> logger)
     {
         _terminalService = terminalService;
@@ -130,42 +130,42 @@ public class TerminalsController : ControllerBase
         return Ok(terminal);
     }
 
-    /// <summary>
-    /// Updates an existing terminal.
-    /// </summary>
-    /// <param name="terminalId">The ID of the terminal to update.</param>
-    /// <param name="updateRequest">The terminal update request data.</param>
-    /// <returns>No Content if successful; Not Found if terminal doesn't exist.</returns>
+    // /// <summary>
+    // /// Updates an existing terminal.
+    // /// </summary>
+    // /// <param name="terminalId">The ID of the terminal to update.</param>
+    // /// <param name="updateRequest">The terminal update request data.</param>
+    // /// <returns>No Content if successful; Not Found if terminal doesn't exist.</returns>
+    // [HttpPut("terminals/{terminalId:guid}")]
+    // [ProducesResponseType(204)] // No Content
+    // [ProducesResponseType(400)] // Bad Request (validation errors)
+    // [ProducesResponseType(404)] // Not Found
+    // public async Task<IActionResult> UpdateTerminal(Guid terminalId,
+    //     [FromBody] UpdateTerminalAndSecretRequest updateRequest)
+    // {
+    //     try
+    //     {
+    //         var success = await _terminalService.UpdateTerminalAsync(terminalId, updateRequest);
+    //         if (!success)
+    //         {
+    //             return NotFound(new { message = $"Terminal with ID {terminalId} not found or update failed." });
+    //         }
+    //
+    //         return NoContent();
+    //     }
+    //     catch (Application.Common.Exceptions.CustomValidationException ex)
+    //     {
+    //         return BadRequest(ex.Errors);
+    //     }
+    //     // Catch specific "NotFound" exception if your service/handler throws it
+    //     // catch (TerminalNotFoundException ex)
+    //     // {
+    //     //     return NotFound(new { message = ex.Message });
+    //     // }
+    // }
+
+
     [HttpPut("terminals/{terminalId:guid}")]
-    [ProducesResponseType(204)] // No Content
-    [ProducesResponseType(400)] // Bad Request (validation errors)
-    [ProducesResponseType(404)] // Not Found
-    public async Task<IActionResult> UpdateTerminal(Guid terminalId,
-        [FromBody] UpdateTerminalAndSecretRequest updateRequest)
-    {
-        try
-        {
-            var success = await _terminalService.UpdateTerminalAsync(terminalId, updateRequest);
-            if (!success)
-            {
-                return NotFound(new { message = $"Terminal with ID {terminalId} not found or update failed." });
-            }
-
-            return NoContent();
-        }
-        catch (Application.Common.Exceptions.CustomValidationException ex)
-        {
-            return BadRequest(ex.Errors);
-        }
-        // Catch specific "NotFound" exception if your service/handler throws it
-        // catch (TerminalNotFoundException ex)
-        // {
-        //     return NotFound(new { message = ex.Message });
-        // }
-    }
-
-
-    [HttpPut($"terminals/{{erminalId:guid}}")]
     public async Task<IActionResult> UpdateTerminalAsync(
         Guid terminalId,
         [FromBody] UpdateTerminalAndSecretRequest request,
@@ -176,15 +176,9 @@ public class TerminalsController : ControllerBase
             return BadRequest("Request body is required.");
         }
 
-        var command = new UpdateTerminalCommand(terminalId, request);
-
+        //  var command = new UpdateTerminalCommand(terminalId, request);
         var result = await _terminalService.UpdateTerminalAndSecretAsync(
-            terminalCommand: command,
-            newSecretString: request.NewSecretString,
-            secretId: request.SecretId,
-            description: request.SecretDescription,
-            cancellationToken: cancellationToken
-        );
+            terminalId, request, cancellationToken);
 
         if (!result)
         {
@@ -193,8 +187,8 @@ public class TerminalsController : ControllerBase
 
         return NoContent();
     }
-    
-    
+
+
     [HttpGet("terminals/all")]
     [ProducesResponseType(typeof(List<TerminalResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -211,5 +205,4 @@ public class TerminalsController : ControllerBase
             return StatusCode(500, "An error occurred while retrieving terminals.");
         }
     }
-    
 }

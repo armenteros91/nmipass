@@ -67,7 +67,6 @@ public class TenantService : ITenantService
         try
         {
             await _unitOfWork.TenantRepository.AddAsync(tenant);
-            // API Key is now set in CreateTenantCommandHandler
             tenant.AddDomainEvent(TenantActivatedEvent.Create(tenant));
 
             await _unitOfWork.CommitAsync();
@@ -83,7 +82,6 @@ public class TenantService : ITenantService
     public async Task<Tenant?> ValidateByApiKeyAsync(string apiKey)
     {
         _logger.LogInformation("Validating tenant by API key");
-        // This will use the updated TenantRepository.GetByApiKeyAsync
         return await _unitOfWork.TenantRepository.GetByApiKeyAsync(apiKey);
     }
 
@@ -116,10 +114,6 @@ public class TenantService : ITenantService
                         }
                     });
             }
-
-            // Preserve existing API Key if not explicitly changed by another mechanism
-            tenant.ApiKey = existingTenant.ApiKey;
-
 
             _unitOfWork.TenantRepository.Update(tenant);
             await _unitOfWork.CommitAsync();
@@ -185,40 +179,52 @@ public class TenantService : ITenantService
         }
     }
 
-    // AddApiKeyAsync method removed as per plan
-
-    public async Task<Tenant> UpdateTenantApiKeyAsync(Guid tenantId, string newApiKey)
+    public async Task<TenantApiKey> AddApiKeyAsync(Guid tenantId, string apiKeyValue, string? description,
+        bool isActive)
     {
-        _logger.LogInformation("Attempting to update API key for TenantId: {TenantId} via TenantService", tenantId);
+        _logger.LogInformation("Attempting to add API key for TenantId: {TenantId} via TenantService", tenantId);
 
         var tenant = await _unitOfWork.TenantRepository.GetByIdAsync(tenantId);
         if (tenant == null)
         {
-            _logger.LogWarning("TenantService: Tenant with Id {TenantId} not found for API key update", tenantId);
+            _logger.LogWarning("TenantService: Tenant with Id {TenantId} not found", tenantId);
             throw new TenantNotFoundException(tenantId);
         }
 
-        if (string.IsNullOrWhiteSpace(newApiKey))
+        var newApiKey = new TenantApiKey(apiKeyValue, tenantId)
         {
-            _logger.LogWarning("TenantService: New API key for TenantId: {TenantId} cannot be null or whitespace.", tenantId);
-            throw new ArgumentException("New API key cannot be null or whitespace.", nameof(newApiKey));
-        }
-
-        tenant.ApiKey = newApiKey;
+            Description = description,
+            Status = isActive
+        };
 
         try
         {
-            _unitOfWork.TenantRepository.Update(tenant);
+            //tenant.AddApiKey(newApiKey);
+            _unitOfWork.TenantRepository.Addapikey(newApiKey);
+            // This method within Tenant entity adds the key to its collection
+            // and raises TenantApiKeyAddedEvent.
+
+            // _unitOfWork.TenantRepository.Update(tenant);
             await _unitOfWork.CommitAsync();
-            _logger.LogInformation("TenantService: Successfully updated API key for TenantId: {TenantId}", tenantId);
-            return tenant;
+
+            _logger.LogInformation("TenantService: Successfully added API key {ApiKeyId} to TenantId: {TenantId}",
+                newApiKey.TenantApikeyId, tenantId);
+            return newApiKey;
+        }
+        catch (InvalidTenantException ex) // Catch specific exception from tenant.AddApiKey (e.g. duplicate key)
+        {
+            _logger.LogWarning(ex, "TenantService: Error adding API key to tenant {TenantId}: {ErrorMessage}", tenantId,
+                ex.Message);
+            // Re-throw to be handled by presentation layer or global exception handler
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "TenantService: An unexpected error occurred while updating API key for tenant {TenantId}", tenantId);
-            // Rollback might be handled by UnitOfWork's CommitAsync or requires explicit call depending on its implementation
-            // await _unitOfWork.RollbackTransactionAsync(); // If UoW doesn't auto-rollback on CommitAsync failure
-            throw;
+            _logger.LogError(ex,
+                "TenantService: An unexpected error occurred while adding API key to tenant {TenantId}", tenantId);
+            // Consider if rollback is needed and possible via _unitOfWork here, if CommitAsync failed.
+            // await _unitOfWork.RollbackTransactionAsync();
+            throw; // Re-throw the exception
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Reflection;
 using AutoMapper; // Added
 using FluentValidation;
 using MediatR;
@@ -27,13 +28,15 @@ public static class ApplicationInstaller
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         // 1. Configure MediatR and register handlers from the Application assembly
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly));
+        
+        //register mediaTR
         services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly));
-        // This line ensures MediatR scans the assembly containing CreateSecretCommandHandler.
-        // It might be redundant if Application.AssemblyReference.Assembly is the same one,
-        // but keeping it preserves original behavior.
-        services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssemblyContaining<CreateSecretCommandHandler>());
+        {
+           cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+        });
+
+    
 
         // 2. Configure AutoMapper and register profiles from the Application assembly
         services.AddAutoMapper(typeof(Application.AssemblyReference).Assembly); // Added
