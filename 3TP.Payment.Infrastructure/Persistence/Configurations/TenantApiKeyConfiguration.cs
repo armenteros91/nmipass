@@ -22,10 +22,11 @@ public class TenantApiKeyConfiguration : IEntityTypeConfiguration<TenantApiKey>
             .IsRequired()
             .HasDefaultValue(true);
 
-        // Relación explícita
-        builder.HasOne(x => x.Tenant)
-            .WithMany(t => t.ApiKeys) // Asegúrate de tener esta colección en Tenant
-            .HasForeignKey(x => x.TenantId)
+        // Relación explícita: Un TenantApiKey pertenece a un Tenant,
+        // y un Tenant tiene una propiedad de navegación ApiKey que apunta a este TenantApiKey.
+        builder.HasOne(apiKey => apiKey.Tenant)
+            .WithOne(tenant => tenant.ApiKey)
+            .HasForeignKey<TenantApiKey>(apiKey => apiKey.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
 
