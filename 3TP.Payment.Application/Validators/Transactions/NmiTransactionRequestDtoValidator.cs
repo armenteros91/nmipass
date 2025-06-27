@@ -43,55 +43,55 @@ namespace ThreeTP.Payment.Application.Validators.Transactions
             });
 
             // Reglas específicas para pago ACH
-            // When(x => x.PaymentType == "check", () =>
-            // {
-            //     RuleFor(x => x.CheckName)
-            //         .NotEmpty().WithMessage("El nombre del titular (checkname) es requerido para pagos ACH");
-            //
-            //     RuleFor(x => x.CheckAba)
-            //         .NotEmpty().WithMessage("El número ABA (checkaba) es requerido para pagos ACH");
-            //
-            //     RuleFor(x => x.CheckAccount)
-            //         .NotEmpty().WithMessage("El número de cuenta (checkaccount) es requerido para pagos ACH");
-            // });
+            When(x => x.PaymentType == "check", () =>
+            {
+                RuleFor(x => x.CheckName)
+                    .NotEmpty().WithMessage("El nombre del titular (checkname) es requerido para pagos ACH");
+
+                RuleFor(x => x.CheckAba)
+                    .NotEmpty().WithMessage("El número ABA (checkaba) es requerido para pagos ACH");
+
+                RuleFor(x => x.CheckAccount)
+                    .NotEmpty().WithMessage("El número de cuenta (checkaccount) es requerido para pagos ACH");
+            });
 
             // Requiere campos para 3DS si se especifica cardholder_auth
-            // When(x => x.CardHolderAuth == "verified" || x.CardHolderAuth == "attempted", () =>
-            // {
-            //     RuleFor(x => x.Cavv)
-            //         .NotEmpty().WithMessage("El valor de autenticación (CAVV) es requerido para transacciones 3DS");
-            //
-            //     RuleFor(x => x.Xid)
-            //         .NotEmpty().WithMessage("El ID de autenticación (XID) es requerido para transacciones 3DS");
-            //
-            //     RuleFor(x => x.ThreeDsVersion)
-            //         .NotEmpty().WithMessage("La versión de 3DS es requerida");
-            //
-            //     RuleFor(x => x.DirectoryServerId)
-            //         .NotEmpty().WithMessage("El ID del servidor de directorio es requerido para 3DS");
-            // });
+            When(x => x.CardHolderAuth == "verified" || x.CardHolderAuth == "attempted", () =>
+            {
+                RuleFor(x => x.Cavv)
+                    .NotEmpty().WithMessage("El valor de autenticación (CAVV) es requerido para transacciones 3DS");
+
+                RuleFor(x => x.Xid)
+                    .NotEmpty().WithMessage("El ID de autenticación (XID) es requerido para transacciones 3DS");
+
+                RuleFor(x => x.ThreeDsVersion)
+                    .NotEmpty().WithMessage("La versión de 3DS es requerida");
+
+                RuleFor(x => x.DirectoryServerId)
+                    .NotEmpty().WithMessage("El ID del servidor de directorio es requerido para 3DS");
+            });
 
             // Requiere 32 caracteres alfanuméricos si se usa Kount
-            // When(x => !string.IsNullOrEmpty(x.TransactionSessionId), () =>
-            // {
-            //     RuleFor(x => x.TransactionSessionId)
-            //         .Length(32)
-            //         .WithMessage("TransactionSessionId debe tener exactamente 32 caracteres")
-            //         .Matches("^[a-zA-Z0-9]{32}$")
-            //         .WithMessage("TransactionSessionId debe ser alfanumérico sin símbolos");
-            // });
+            When(x => !string.IsNullOrEmpty(x.TransactionSessionId), () =>
+            {
+                RuleFor(x => x.TransactionSessionId)
+                    .Length(32)
+                    .WithMessage("TransactionSessionId debe tener exactamente 32 caracteres")
+                    .Matches("^[a-zA-Z0-9]{32}$")
+                    .WithMessage("TransactionSessionId debe ser alfanumérico sin símbolos");
+            });
 
             // Validaciones adicionales recomendadas
-            // RuleFor(x => x.FirstName).NotEmpty().WithMessage("El nombre del titular es requerido");
-            // RuleFor(x => x.LastName).NotEmpty().WithMessage("El apellido del titular es requerido");
-            // RuleFor(x => x.Address1).NotEmpty().WithMessage("La dirección es requerida");
-            // RuleFor(x => x.City).NotEmpty().WithMessage("La ciudad es requerida");
-            // RuleFor(x => x.State).NotEmpty().WithMessage("El estado es requerido");
-            // RuleFor(x => x.Zip).NotEmpty().WithMessage("El código postal es requerido");
-            // RuleFor(x => x.Country).NotEmpty().WithMessage("El país es requerido");
-            // RuleFor(x => x.Email)
-            //     .NotEmpty().WithMessage("El correo electrónico es requerido")
-            //     .EmailAddress().WithMessage("Debe proporcionar un correo electrónico válido");
+            RuleFor(x => x.FirstName).NotEmpty().WithMessage("El nombre del titular es requerido");
+            RuleFor(x => x.LastName).NotEmpty().WithMessage("El apellido del titular es requerido");
+            RuleFor(x => x.Address1).NotEmpty().WithMessage("La dirección es requerida");
+            RuleFor(x => x.City).NotEmpty().WithMessage("La ciudad es requerida");
+            RuleFor(x => x.State).NotEmpty().WithMessage("El estado es requerido");
+            RuleFor(x => x.Zip).NotEmpty().WithMessage("El código postal es requerido");
+            RuleFor(x => x.Country).NotEmpty().WithMessage("El país es requerido");
+            RuleFor(x => x.Email)
+                .NotEmpty().WithMessage("El correo electrónico es requerido")
+                .EmailAddress().WithMessage("Debe proporcionar un correo electrónico válido");
         }
     }
 }
