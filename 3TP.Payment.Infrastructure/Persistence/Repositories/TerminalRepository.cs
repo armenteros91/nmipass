@@ -59,8 +59,8 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
                 throw new ArgumentException("SecretKeyEncrypted is required.");
 
             // Encripta y hashea el secreto antes de persistir
-            var plainSecretKey = entity.SecretKeyEncrypted;
-            entity.SecretKeyEncrypted = _encryptionService.Encrypt(plainSecretKey);
+            var plainSecretKey = $"tenant/{entity.TenantId}/terminal/{entity.TerminalId}/secretkey";
+            entity.SecretKeyEncrypted = plainSecretKey;
             entity.SecretKeyHash = Utils.ComputeSha256(plainSecretKey);
 
             await base.AddAsync(entity);
@@ -81,7 +81,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
                 throw new InvalidOperationException("Terminal not found.");
             }
 
-            terminal.SecretKeyEncrypted = _encryptionService.Encrypt(newPlainSecretKey);
+            terminal.SecretKeyEncrypted = newPlainSecretKey;
             terminal.SecretKeyHash = Utils.ComputeSha256(newPlainSecretKey);
 
             _dbContext.Set<Terminal>().Update(terminal);

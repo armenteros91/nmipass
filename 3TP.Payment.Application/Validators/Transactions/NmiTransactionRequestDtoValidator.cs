@@ -18,9 +18,6 @@ namespace ThreeTP.Payment.Application.Validators.Transactions
                 .NotNull().WithMessage("El monto es obligatorio")
                 .GreaterThan(0).WithMessage("El monto debe ser mayor que cero");
 
-            RuleFor(x => x.Currency)
-                .NotEmpty().WithMessage("La moneda es requerida");
-
             RuleFor(x => x.OrderId)
                 .NotEmpty().WithMessage("El orderId es requerido")
                 .Must(id => Guid.TryParse(id, out _))
@@ -67,8 +64,6 @@ namespace ThreeTP.Payment.Application.Validators.Transactions
                 RuleFor(x => x.ThreeDsVersion)
                     .NotEmpty().WithMessage("La versión de 3DS es requerida");
 
-                RuleFor(x => x.DirectoryServerId)
-                    .NotEmpty().WithMessage("El ID del servidor de directorio es requerido para 3DS");
             });
 
             // Requiere 32 caracteres alfanuméricos si se usa Kount
@@ -81,17 +76,6 @@ namespace ThreeTP.Payment.Application.Validators.Transactions
                     .WithMessage("TransactionSessionId debe ser alfanumérico sin símbolos");
             });
 
-            // Validaciones adicionales recomendadas
-            RuleFor(x => x.FirstName).NotEmpty().WithMessage("El nombre del titular es requerido");
-            RuleFor(x => x.LastName).NotEmpty().WithMessage("El apellido del titular es requerido");
-            RuleFor(x => x.Address1).NotEmpty().WithMessage("La dirección es requerida");
-            RuleFor(x => x.City).NotEmpty().WithMessage("La ciudad es requerida");
-            RuleFor(x => x.State).NotEmpty().WithMessage("El estado es requerido");
-            RuleFor(x => x.Zip).NotEmpty().WithMessage("El código postal es requerido");
-            RuleFor(x => x.Country).NotEmpty().WithMessage("El país es requerido");
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("El correo electrónico es requerido")
-                .EmailAddress().WithMessage("Debe proporcionar un correo electrónico válido");
         }
     }
 }

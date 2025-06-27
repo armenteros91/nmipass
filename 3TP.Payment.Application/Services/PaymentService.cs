@@ -58,12 +58,7 @@ public class PaymentService : IPaymentService
             _logger.LogWarning("Terminal not configured for Tenant ID: {TenantId}", tenant.TenantId);
             throw new ApplicationException("Terminal not configured for this tenant.");
         }
-        var secretName = tenant.Terminal.SecretKeyEncrypted; 
-        if (string.IsNullOrWhiteSpace(secretName))
-        {
-            _logger.LogWarning("Secret name not configured for Terminal ID: {TerminalId}", tenant.Terminal.TerminalId);
-            throw new ApplicationException("Terminal secret name not configured.");
-        }
+
 
         string nmiSecurityKey;
         try

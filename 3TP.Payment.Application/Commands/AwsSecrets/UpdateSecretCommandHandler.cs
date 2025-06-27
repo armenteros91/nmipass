@@ -56,7 +56,7 @@ public class UpdateSecretCommandHandler : IRequestHandler<UpdateSecretCommand, U
                     // 2. Sincronizar con base de datos si aplica
                     if (command.TerminalId.HasValue)
                     {
-                        await _syncService.SyncSecretToTerminalAsync(command.TerminalId.Value, command.NewSecretString,
+                        await _syncService.SyncSecretToTerminalAsync(command.TerminalId.Value, command.SecretId,
                             cancellationToken);
                     }
 

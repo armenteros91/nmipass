@@ -26,18 +26,15 @@ public class TerminalsController : ControllerBase
     /// <param name="tenantId">The ID of the tenant for whom the terminal is being created.</param>
     /// <param name="createRequest">The terminal creation request data.</param>
     /// <returns>The created terminal's details.</returns>
-    [HttpPost("tenants/{tenantId:guid}/terminal")] // Route changed to singular "terminal"
+    [HttpPost("terminal")] // Route changed to singular "terminal"
     [ProducesResponseType(typeof(TerminalResponseDto), 201)]
     [ProducesResponseType(400)] // Bad Request (validation errors)
     [ProducesResponseType(404)] // Tenant Not Found
     [ProducesResponseType(409)] // Conflict (Terminal already exists for tenant)
-    public async Task<IActionResult> CreateTerminalForTenant(Guid tenantId,
+    public async Task<IActionResult> CreateTerminalForTenant(
         [FromBody] CreateTerminalRequestDto createRequest)
     {
-        if (tenantId == Guid.Empty)
-        {
-            return BadRequest(new { message = "Tenant ID is required." });
-        }
+       
 
         // It's good practice to ensure the TenantId in the path matches the one in the body, if present.
         // Or, set it from the path to ensure consistency if the DTO also has TenantId.
@@ -51,10 +48,6 @@ public class TerminalsController : ControllerBase
         // Consider adding validation to ensure tenantId in path matches tenantId in DTO if both are present.
 
 
-        if (createRequest.TenantId != tenantId)
-        {
-            return BadRequest(new { message = "Tenant ID in path does not match Tenant ID in request body." });
-        }
 
         try
         {
