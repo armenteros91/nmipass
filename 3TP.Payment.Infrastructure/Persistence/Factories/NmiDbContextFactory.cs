@@ -36,7 +36,7 @@ public class NmiDbContextFactory : INmiDbContextFactory, IDesignTimeDbContextFac
     {
         var optionsBuilder = new DbContextOptionsBuilder<NmiDbContext>();
         optionsBuilder.UseSqlServer("Server=aaee9804fa9174128bece5284c22379c-2059889139.us-east-1.elb.amazonaws.com,1433;Database=PasarelaQA;User ID=sa;Password=B!AgxML*cO!^5dEY; persist security info=True;TrustServerCertificate=True;");
-
+        //optionsBuilder.UseSqlServer("Server=localhost,1433;Database=pasarelaQA;User NmiTransactionRequestLogId=sa;Password=TuPasswordSegura123!;TrustServerCertificate=True;");
         return new NmiDbContext(optionsBuilder.Options);
     }
 

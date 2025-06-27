@@ -4,7 +4,7 @@ namespace ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
 /// <summary>
 /// modelo de respuesta Tipado de NMI
 /// example respnse NMI 
-///  ' response=1&responsetext=SUCCESS&authcode=123456&transactionid=10805652794&avsresponse=&cvvresponse=N&orderid=&type=sale&response_code=100 '  //todo documentacion de respuesta NMI 
+///  ' Response=1&responsetext=SUCCESS&authcode=123456&transactionid=10805652794&avsresponse=&cvvresponse=N&orderid=&type=sale&response_code=100 '  //todo documentacion de respuesta NMI 
 /// </summary>
 public class NmiResponseDto
 {
@@ -17,7 +17,7 @@ public class NmiResponseDto
     public string? Response { get; set; }
 
     /// <summary>
-    /// Textual response
+    /// Textual Response
     /// </summary>
     [JsonPropertyName("responsetext")]
     public string? ResponseText { get; set; }
@@ -35,13 +35,13 @@ public class NmiResponseDto
     public string? TransactionId { get; set; }
 
     /// <summary>
-    /// AVS response code (See AVS Response Codes). 
+    /// AVS Response code (See AVS Response Codes). 
     /// </summary>
     [JsonPropertyName("avsresponse")]
     public string? AvsResponse { get; set; }
 
     /// <summary>
-    ///  CVV response code (See See CVV Response Codes).
+    ///  CVV Response code (See See CVV Response Codes).
     /// </summary>
     [JsonPropertyName("cvvresponse")]
     public string? CvvResponse { get; set; }
@@ -82,7 +82,7 @@ public class NmiResponseDto
     public string? KountScore { get; set; }
 
     /// <summary>
-    ///	Mastercard’s Merchant Advice Code (MAC) is returned in response if one is provided by the processor.
+    ///	Mastercard’s Merchant Advice Code (MAC) is returned in Response if one is provided by the processor.
     /// Note: Only returned if API configuration is set to return this value. 
     /// </summary>
     [JsonPropertyName("merchant_advice_code")]

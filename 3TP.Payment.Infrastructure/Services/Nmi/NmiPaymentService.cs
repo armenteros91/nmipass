@@ -16,8 +16,8 @@ namespace ThreeTP.Payment.Infrastructure.Services.Nmi;
 public class NmiPaymentService : INmiPaymentGateway
 {
     private readonly HttpClient _httpClient;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<NmiPaymentService> _logger;
     private readonly IOptions<NmiSettings> _nmiSettings;
 
@@ -39,57 +39,78 @@ public class NmiPaymentService : INmiPaymentGateway
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
         _nmiSettings = nmiSettings ?? throw new ArgumentNullException(nameof(nmiSettings));
         _unitOfWork = unitOfWork;
+        ValidateNmiSettings(_nmiSettings);
+    }
+
+    private void ValidateNmiSettings(IOptions<NmiSettings> settings)
+    {
+        if (string.IsNullOrWhiteSpace(settings.Value.Endpoint.Transaction))
+            throw new InvalidOperationException("NMI BaseURL is not configured.");
+
+        if (string.IsNullOrWhiteSpace(settings.Value.Endpoint?.Transaction))
+            throw new InvalidOperationException("NMI Transaction endpoint is not configured.");
+
+        if (string.IsNullOrWhiteSpace(settings.Value.Query?.QueryApi))
+            throw new InvalidOperationException("NMI Query endpoint is not configured.");
     }
 
     /// <summary>
-    /// Sends a transaction request to the NMI payment gateway and processes the response.
+    /// Sends a transaction request to the NMI payment gateway and processes the Response.
     /// </summary>
     /// <typeparam name="TRequest">The type of the transaction request DTO, inheriting from <see cref="BaseTransactionRequestDto"/>.</typeparam>
     /// <param name="dto">The transaction request data.</param>
-    /// <returns>A <see cref="NmiResponseDto"/> containing the transaction response.</returns>
+    /// <returns>A <see cref="NmiResponseDto"/> containing the transaction Response.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="dto"/> is null.</exception>
     /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
-    public async Task<NmiResponseDto> SendAsync<TRequest>(TRequest dto) where TRequest : BaseTransactionRequestDto
+    public async Task<NmiResponseDto> SendAsync<TRequest>(TRequest dto) where TRequest : SaleTransactionRequestDto
     {
-        var form = new FormUrlEncodedContent(Utils.DtoExtensions.ToKeyValuePairs(dto));
+        ArgumentNullException.ThrowIfNull(dto);
+        var form = new FormUrlEncodedContent(Utils.DtoExtensions.ToKeyValuePairsProperty(dto));
+        
+        //var formContent = await form.ReadAsStringAsync();
+        var formContent = Utils.SensitiveDataLogger.ToMaskedFormUrlEncoded(dto);
+        _logger.LogInformation("Contenido del form enviado: {FormContent}", formContent);
+         
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{_nmiSettings.Value.BaseUrl}{_nmiSettings.Value.Endpoint.Transaction}")
+        {
+            Content = form
+        };
+        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-www-form-urlencoded");
+        request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
 
-        var response =
-            await _httpClient.PostAsync($"{_nmiSettings.Value.BaseURL}{_nmiSettings.Value.Endpoint.Transaction}",
-                form);
+        // Enviar la solicitud
+        var response = await _httpClient.SendAsync(request);
         var content = await response.Content.ReadAsStringAsync();
+        
 
-        var parsedResponse = ParseResponse(content);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("NMI request failed with status code {StatusCode} and content: {Content}",
+                response.StatusCode, content);
+            throw new HttpRequestException($"NMI request failed: {response.StatusCode}");
+        }
 
+        var parsedResponse = Utils.DtoExtensions.ParseResponse<NmiResponseDto>(content);
+        
         // Map and persist request
-        var requestLog = _mapper.Map<NmiTransactionRequestLog>(dto);
-
-        requestLog.RawContent =
-            string.Join("&",
-                Utils.DtoExtensions.ToKeyValuePairs(dto)
-                    .Select(kv => $"{kv.Key}={kv.Value}")); // TODO: validar si un campo no esta presente no agregar 
-
-        //await _unitOfWork.requestLogRepo.AddAsync(requestLog);
-
-        //todo:pendiente agregar log de tabla de transacciones roilan
-
-        // Map and persist response
-        // var responseLog = _mapper.Map<NmiTransactionResponseLog>(parsedResponse);
-        // responseLog.RawResponse = content;
-        // await _responseLogRepo.AddAsync(responseLog);
-
+        // var requestLog = _mapper.Map<NmiTransactionRequestLog>(dto);
+        // //requestLog.RawContent = string.Join("&", Utils.DtoExtensions.ToKeyValuePairsProperty(dto).Select(kv => $"{kv.Key}={kv.Value}"));
+        // requestLog.RawContent = formContent;
+        
         return parsedResponse;
     }
 
     /// <summary>
-    /// Queries a transaction from the NMI payment gateway using the provided query parameters and returns the response as an XML-deserialized object.
+    /// Queries a transaction from the NMI payment gateway using the provided query parameters and returns the Response as an XML-deserialized object.
     /// </summary>
     /// <param name="dto">The query transaction request data.</param>
-    /// <returns>A <see cref="QueryResponseDto"/> containing the query response data.</returns>
+    /// <returns>A <see cref="QueryResponseDto"/> containing the query Response data.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="dto"/> is null.</exception>
     /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the XML response cannot be deserialized.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the XML Response cannot be deserialized.</exception>
     public async Task<QueryResponseDto> QueryAsync(QueryTransactionRequestDto dto)
     {
         if (dto == null)
@@ -107,12 +128,12 @@ public class NmiPaymentService : INmiPaymentGateway
         try
         {
             var response =
-                await _httpClient.PostAsync($"{_nmiSettings.Value.BaseURL}{_nmiSettings.Value.Query.QueryApi}",
+                await _httpClient.PostAsync($"{_nmiSettings.Value.BaseUrl}{_nmiSettings.Value.Query.QueryApi}",
                     form);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
-            _logger.LogDebug("Received query response: {Content}", content);
+            _logger.LogDebug("Received query Response: {Content}", content);
 
             var responseDeserialized = Utils.QueryResponseSerializer.DeserializeXml(content);
 
@@ -121,13 +142,13 @@ public class NmiPaymentService : INmiPaymentGateway
             // Map and persist request
             // var requestLog = _mapper.Map<NmiTransactionRequestLog>(dto);
             // requestLog.RawContent = string.Join("&",
-            //     Utils.DtoExtensions.ToKeyValuePairs(dto)
+            //     Utils.DtoExtensions.ToKeyValuePairsForNotLogginSensitiveData(dto)
             //         .Where(kv => kv.Value != null)
             //         .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
 
             //  await _requestLogRepo.AddAsync(requestLog);
 
-            // Map and persist response
+            // Map and persist Response
             // var responseLog = _mapper.Map<NmiTransactionResponseLog>(parsedResponse); // todo: modelo que consulta de respueta fcani 
             // responseLog.RawResponse = content;
             // await _responseLogRepo.AddAsync(responseLog);
@@ -142,17 +163,17 @@ public class NmiPaymentService : INmiPaymentGateway
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing Gateway query response");
-            throw new InvalidOperationException("Failed to process query response", ex);
+            _logger.LogError(ex, "Error processing Gateway query Response");
+            throw new InvalidOperationException("Failed to process query Response", ex);
         }
     }
 
 
     /// <summary>
-    /// Parses a raw NMI API response into a <see cref="NmiResponseDto"/>.
+    /// Parses a raw NMI API Response into a <see cref="NmiResponseDto"/>.
     /// </summary>
-    /// <param name="raw">The raw response string from the NMI API.</param>
-    /// <returns>A <see cref="NmiResponseDto"/> containing the parsed response data.</returns>
+    /// <param name="raw">The raw Response string from the NMI API.</param>
+    /// <returns>A <see cref="NmiResponseDto"/> containing the parsed Response data.</returns>
     private NmiResponseDto ParseResponse(string raw)
     {
         var pairs = raw.Split('&')
@@ -168,7 +189,6 @@ public class NmiPaymentService : INmiPaymentGateway
                 prop.SetValue(dto, Convert.ChangeType(val, prop.PropertyType));
             }
         }
-
         return dto;
     }
 }

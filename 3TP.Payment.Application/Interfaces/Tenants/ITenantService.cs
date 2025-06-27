@@ -52,7 +52,5 @@ namespace ThreeTP.Payment.Application.Interfaces.Tenants
         /// <param name="tenantId">ID del tenant</param>
         /// <param name="isActive">Nuevo estado</param>
         Task SetActiveStatusAsync(Guid tenantId, bool isActive);
-
-        Task<TenantApiKey> AddApiKeyAsync(Guid tenantId, string apiKeyValue, string? description, bool isActive);
     }
 }

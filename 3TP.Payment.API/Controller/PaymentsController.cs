@@ -1,13 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
-using ThreeTP.Payment.Application.DTOs.Requests.Tenants;
 using ThreeTP.Payment.Application.DTOs.Responses.Pasarela;
-using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Application.Interfaces.Payment;
-using ThreeTP.Payment.Application.Services;
-using ThreeTP.Payment.Domain.Entities.Tenant;
+using ThreeTP.Payment.Application.Validators.Transactions;
 using ThreeTP.Payment.Infrastructure.Services.Neutrino;
+using FluentValidation.Results;
 
 namespace ThreeTP.Payment.API.Controller
 {
@@ -49,7 +47,7 @@ namespace ThreeTP.Payment.API.Controller
         //
         //     if (terminal == null) return Forbid();
         //
-        //     var secretKey = await _terminalService.GetDecryptedSecretKeyAsync(terminal.Id);
+        //     var secretKey = await _terminalService.GetDecryptedSecretKeyAsync(terminal.NmiTransactionRequestLogId);
         //     var result = await _paymentGatewayService.ProcessPaymentAsync(request, secretKey);
         //
         //     return Ok(result);
@@ -60,12 +58,12 @@ namespace ThreeTP.Payment.API.Controller
         /// Processes a payment transaction using the NMI payment gateway.
         /// </summary>
         /// <param name="apiKey">The API key for tenant authentication, provided in the request header.</param>
-        /// <param name="paymentRequest">The payment request details.</param>
-        /// <returns>A <see cref="NmiResponseDto"/> containing the payment response.</returns>
-        /// <response code="200">Payment processed successfully.</response>
-        /// <response code="400">Invalid request data.</response>
-        /// <response code="401">Invalid or inactive API key.</response>
-        /// <response code="500">Server error occurred.</response>
+        /// <param name="saleTransactionRequest">The payment request details.</param>
+        /// <returns>A <see cref="NmiResponseDto"/> containing the payment Response.</returns>
+        /// <Response code="200">Payment processed successfully.</Response>
+        /// <Response code="400">Invalid request data.</Response>
+        /// <Response code="401">Invalid or inactive API key.</Response>
+        /// <Response code="500">Server error occurred.</Response>
         [HttpPost]
         [ProducesResponseType(typeof(NmiResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -74,7 +72,7 @@ namespace ThreeTP.Payment.API.Controller
         public async Task<IActionResult> ProcessPayment(
             [FromHeader(Name = "X-Api-Key")] [Required]
             string apiKey,
-            [FromBody] BaseTransactionRequestDto paymentRequest)
+            [FromBody] SaleTransactionRequestDto saleTransactionRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -83,7 +81,19 @@ namespace ThreeTP.Payment.API.Controller
 
             try
             {
-                var response = await _paymentService.ProcessPaymentAsync(apiKey, paymentRequest);
+                // Validación manual con FluentValidation
+                // var validator = new NmiTransactionRequestDtoValidator();
+                // var validationResult = validator.Validate(saleTransactionRequest);
+                //
+                // if (!validationResult.IsValid)
+                // {
+                //     var failures = validationResult.Errors.Select(e =>
+                //         new ValidationFailure(e.PropertyName, e.ErrorMessage));
+                //
+                //     return  BadRequest(failures);
+                // }
+
+                var response = await _paymentService.ProcessPaymentAsync(apiKey, saleTransactionRequest);
                 return Ok(response);
             }
             catch (UnauthorizedAccessException ex)
@@ -102,11 +112,11 @@ namespace ThreeTP.Payment.API.Controller
         /// </summary>
         /// <param name="apiKey">The API key for tenant authentication, provided in the request header.</param>
         /// <param name="queryTransactionRequest">The transaction query details.</param>
-        /// <returns>A <see cref="QueryResponseDto.NmResponse"/> containing the query response.</returns>
-        /// <response code="200">Query processed successfully.</response>
-        /// <response code="400">Invalid request data.</response>
-        /// <response code="401">Invalid or inactive API key.</response>
-        /// <response code="500">Server error occurred.</response>
+        /// <returns>A <see cref="QueryResponseDto.NmResponse"/> containing the query Response.</returns>
+        /// <Response code="200">Query processed successfully.</Response>
+        /// <Response code="400">Invalid request data.</Response>
+        /// <Response code="401">Invalid or inactive API key.</Response>
+        /// <Response code="500">Server error occurred.</Response>
         [HttpPost("query")]
         [ProducesResponseType(typeof(QueryResponseDto.NmResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

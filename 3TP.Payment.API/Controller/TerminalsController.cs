@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using ThreeTP.Payment.Application.Commands.Terminals;
 using ThreeTP.Payment.Application.DTOs.Requests.Terminals;
 using ThreeTP.Payment.Application.DTOs.Responses.Terminals;
 using ThreeTP.Payment.Application.Interfaces.Terminals;

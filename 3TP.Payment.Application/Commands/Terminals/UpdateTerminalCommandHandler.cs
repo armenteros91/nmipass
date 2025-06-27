@@ -24,7 +24,7 @@ public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalComman
     public async Task<bool> Handle(UpdateTerminalCommand request, CancellationToken cancellationToken)
     {
         var strategy = _unitOfWork.CreateExecutionStrategy();
-        
+
         return await strategy.ExecuteAsync(async () =>
         {
             _logger.LogInformation("Starting UpdateTerminalCommand for TerminalId: {TerminalId}", request.TerminalId);
@@ -75,6 +75,6 @@ public class UpdateTerminalCommandHandler : IRequestHandler<UpdateTerminalComman
                 await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 throw;
             }
-       });
+        });
     }
 }

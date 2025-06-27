@@ -99,7 +99,8 @@ public class SecretsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error decrypting secret.");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while decrypting the secret.");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while decrypting the secret.");
         }
     }
 
@@ -110,32 +111,36 @@ public class SecretsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ValidateSecret([FromBody] SecretValidationRequest request)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.SecretId) || string.IsNullOrWhiteSpace(request.SecretToValidate))
+        if (request == null || string.IsNullOrWhiteSpace(request.SecretId) ||
+            string.IsNullOrWhiteSpace(request.SecretToValidate))
         {
             return BadRequest("Secret ID and secret to validate cannot be empty.");
         }
 
         try
         {
-            var isValid = await _secretValidationService.ValidateSecretAsync(request.SecretId, request.SecretToValidate);
+            var isValid =
+                await _secretValidationService.ValidateSecretAsync(request.SecretId, request.SecretToValidate);
             if (!isValid)
             {
                 // Consider if a specific status code for invalid secret (but operation successful) is more appropriate
                 // For now, returning OK with false, or could be NotFound if the secretId implies a resource not matching.
                 return Ok(false);
             }
+
             return Ok(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating secret for ID {SecretId}.", request.SecretId);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while validating the secret.");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while validating the secret.");
         }
     }
 }
 
 public class SecretValidationRequest
 {
-    public string SecretId { get; set; }
-    public string SecretToValidate { get; set; }
+    public string? SecretId { get; set; }
+    public string? SecretToValidate { get; set; }
 }

@@ -9,6 +9,8 @@ namespace ThreeTP.Payment.Application.DTOs.Requests.Pasarela
 
         [Required(ErrorMessage = "TransactionTypeId is required")]
         public Guid TypeTransactionsId { get; set; }
+        public string PaymentTransactionsId { get; set; }
+        public string responseCode  { get; set; }
 
         // Opcional: Si el TraceId se genera en el servidor, omite esta propiedad.
         public Guid? TraceId { get; set; }

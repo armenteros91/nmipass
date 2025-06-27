@@ -22,16 +22,16 @@ namespace ThreeTP.Payment.Application.Queries.Tenants
 
         public async Task<Tenant> Handle(GetTenantByIdQuery request, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Fetching tenant by Id {TenantId}.", request.TenantId);
+            _logger.LogInformation("Fetching tenant by NmiTransactionRequestLogId {TenantId}.", request.TenantId);
             var tenant = await _unitOfWork.TenantRepository.GetByIdAsync(request.TenantId);
 
             if (tenant == null)
             {
-                _logger.LogWarning("Tenant with Id {TenantId} not found.", request.TenantId);
+                _logger.LogWarning("Tenant with NmiTransactionRequestLogId {TenantId} not found.", request.TenantId);
                 throw new TenantNotFoundException(request.TenantId);
             }
 
-            _logger.LogInformation("Successfully fetched tenant with Id {TenantId}.", request.TenantId);
+            _logger.LogInformation("Successfully fetched tenant with NmiTransactionRequestLogId {TenantId}.", request.TenantId);
             return tenant;
         }
     }

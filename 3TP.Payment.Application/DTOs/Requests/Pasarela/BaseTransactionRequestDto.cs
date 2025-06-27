@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using ThreeTP.Payment.Application.Helpers;
+using ThreeTP.Payment.Application.Helpers.Mask;
 
 namespace ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 
@@ -12,15 +12,16 @@ public abstract class BaseTransactionRequestDto
     /// </summary>
     [Required]
     [JsonPropertyName("type")]
-    public string TypeTransaction { get; set; } = "sale";
+    public string? TypeTransaction { get; set; } = "sale";
 
     /// <summary>
     /// API Security Key assigned to a merchant account.
     /// New keys can be generated from the merchant control panel in Settings > Security Keys 
     /// </summary>
-    [Required]
+   // [Required]
     [JsonPropertyName("security_key")]
-    public string SecurityKey { get; set; } = string.Empty;
+    [MaskStrategy(typeof(MaskAllStrategy))]//decorador para enmascarar datos sensibles strategia todos
+    public string? SecurityKey { get; set; } = string.Empty;
 
     #region Payment Card Informations
 
@@ -35,7 +36,9 @@ public abstract class BaseTransactionRequestDto
     ///  Credit Card Number
     /// </summary>
     [Required]
-    [JsonPropertyName("ccnumber")]//todo: asegurar  enmascarar en logs :fcano 
+    [Helpers.SensitiveData]
+    [JsonPropertyName("ccnumber")] 
+    [MaskStrategy(typeof(MaskLast4Strategy))]    
     public string CreditCardNumber { get; set; }
 
     /// <summary>
@@ -43,14 +46,17 @@ public abstract class BaseTransactionRequestDto
     /// </summary>
     [Required]
     [JsonPropertyName("ccexp")]
+    [Helpers.SensitiveData]
+    [MaskStrategy(typeof(MaskAllStrategy))]
     public string CreditCardExpiration { get; set; }
 
     /// <summary>
     /// The card security code. While this is not required, it is strongly recommended.
     /// </summary>
     [JsonPropertyName("cvv")]
-    [SensitiveData] //mark ignore sensitive data in logs 
-    public string Cvv { get; set; }
+    [Helpers.SensitiveData] //mark ignore sensitive data in logs 
+    [MaskStrategy(typeof(MaskAllStrategy))]
+    public string? Cvv { get; set; }
 
     /// <summary>
     /// The type of payment.
@@ -58,7 +64,7 @@ public abstract class BaseTransactionRequestDto
     /// Values: 'creditcard', 'check', or 'cash'
     /// </summary>
     [JsonPropertyName("payment")]
-    public string PaymentType { get; set; } = "creditcard";
+    public string? PaymentType { get; set; } = "creditcard";
 
     #endregion
 
@@ -68,19 +74,19 @@ public abstract class BaseTransactionRequestDto
     /// The name on the customer's ACH account.
     /// </summary>
     [JsonPropertyName("checkname")]
-    public string CheckName { get; set; }
+    public string? CheckName { get; set; }
 
     /// <summary>
     /// The customer's bank routing number.
     /// </summary>
     [JsonPropertyName("checkaba")]
-    public string CheckAba { get; set; }
+    public string? CheckAba { get; set; }
 
     /// <summary>
     ///	The customer's bank account number.
     /// </summary>
     [JsonPropertyName("checkaccount")]
-    public string CheckAccount { get; set; }
+    public string? CheckAccount { get; set; }
 
     /// <summary>
     ///  The type of ACH account the customer has. Values: 'business' or 'personal'
@@ -109,7 +115,7 @@ public abstract class BaseTransactionRequestDto
     /// The encrypted token created when integration directly to the Google Pay SDK.
     /// </summary>
     [JsonPropertyName("googlepay_payment_data")]
-    public string GooglepayPaymentData { get; set; }
+    public string? GooglepayPaymentData { get; set; }
 
     #endregion
 
@@ -144,7 +150,7 @@ public abstract class BaseTransactionRequestDto
     /// Custom miscellaneous fee name. Default: Miscellaneous Fee
     /// </summary>
     [JsonPropertyName("misc_fee_name")]
-    public string MiscFeeName { get; set; } = "Miscellaneous Fee";
+    public string? MiscFeeName { get; set; } 
 
     /// <summary>
     /// How much less a customer paid due to a cash discount.
@@ -163,7 +169,7 @@ public abstract class BaseTransactionRequestDto
     /// The transaction currency. Format: ISO 4217
     /// </summary>
     [JsonPropertyName("currency")]
-    public string Currency { get; set; } = "USD";
+    public string? Currency { get; set; } = "USD";
 
     /// <summary>
     /// The sales tax included in the transaction amount associated with the purchase.
@@ -171,7 +177,7 @@ public abstract class BaseTransactionRequestDto
     /// Default: '0.00' Format: x.xx 
     /// </summary>
     [JsonPropertyName("tax")]
-    public decimal Tax { get; set; } = 0.00m;
+    public decimal? Tax { get; set; } = 0.00m;
 
     #endregion
 
@@ -181,10 +187,10 @@ public abstract class BaseTransactionRequestDto
     /// Order template ID.
     /// </summary>
     [JsonPropertyName("order_template")]
-    public string OrderTemplate { get; set; }
+    public string? OrderTemplate { get; set; }
 
     /// <summary>
-    /// Order Id
+    /// Order NmiTransactionRequestLogId
     /// </summary>
     [JsonPropertyName("orderid")]
     public string? OrderId { get; set; }
@@ -193,13 +199,13 @@ public abstract class BaseTransactionRequestDto
     /// Order description. Legacy variable includes: orderdescription
     /// </summary>
     [JsonPropertyName("order_description")]
-    public string OrderDescription { get; set; }
+    public string? OrderDescription { get; set; }
 
     /// <summary>
     /// IP address of cardholder, this field is recommended. Format: xxx.xxx.xxx.xxx
     /// </summary>
     [JsonPropertyName("ipaddress")]
-    public string IpAddress { get; set; }
+    public string? IpAddress { get; set; }
 
     #endregion
 
@@ -209,61 +215,61 @@ public abstract class BaseTransactionRequestDto
     /// Cardholder's first name.Legacy variable includes: firstname
     /// </summary>
     [JsonPropertyName("first_name")]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
     /// <summary>
     /// Cardholder's last name Legacy variable includes: lastname
     /// </summary>
     [JsonPropertyName("last_name")]
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
 
     /// <summary>
     /// Cardholder's company
     /// </summary>
     [JsonPropertyName("company")]
-    public string Company { get; set; }
+    public string? Company { get; set; }
 
     /// <summary>
     /// Card billing address
     /// </summary>
     [JsonPropertyName("address1")]
-    public string Address1 { get; set; }
+    public string? Address1 { get; set; }
 
     /// <summary>
     ///   	Card billing address, line 2
     /// </summary>
     [JsonPropertyName("address2")]
-    public string Address2 { get; set; }
+    public string? Address2 { get; set; }
 
     /// <summary>
     ///	Card billing city
     /// </summary>
     [JsonPropertyName("city")]
-    public string City { get; set; }
+    public string? City { get; set; }
 
     /// <summary>
     /// Card billing state. Format: CC
     /// </summary>
     [JsonPropertyName("state")]
-    public string State { get; set; }
+    public string? State { get; set; }
 
     /// <summary>
     ///  	Card billing zip code
     /// </summary>
     [JsonPropertyName("zip")]
-    public string Zip { get; set; }
+    public string? Zip { get; set; }
 
     /// <summary>
     /// Card billing country. Country codes are as shown in ISO 3166. Format: CC
     /// </summary>
     [JsonPropertyName("country")]
-    public string Country { get; set; }
+    public string? Country { get; set; }
 
     /// <summary>
     /// Billing email address
     /// </summary>
     [JsonPropertyName("email")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     #endregion
 
@@ -273,32 +279,34 @@ public abstract class BaseTransactionRequestDto
     ///  	Set 3D Secure condition. Value used to determine E-commerce indicator (ECI).Values: 'verified' or 'attempted'
     /// </summary>
     [JsonPropertyName("cardholder_auth")]
-    public string CardHolderAuth { get; set; }
+    public string? CardHolderAuth { get; set; }
 
     /// <summary>
     ///  	3DSecure version. Examples: "2.0.0" or "2.2.0"
     /// </summary>
     [JsonPropertyName("three_ds_version")]
-    public string ThreeDsVersion { get; set; }
+    public string? ThreeDsVersion { get; set; }
 
     /// <summary>
     /// Cardholder authentication verification value.Format: base64 encoded
     /// </summary>
     [JsonPropertyName("cavv")]
-    public string Cavv { get; set; }
+    [Helpers.SensitiveData]
+    [MaskStrategy(typeof(MaskAllStrategy))]
+    public string? Cavv { get; set; }
 
     /// <summary>
     /// Cardholder authentication transaction id. Format: base64 encoded
     /// </summary>
     [JsonPropertyName("xid")]
-    public string Xid { get; set; }
+    public string? Xid { get; set; }
 
     /// <summary>
     /// Directory Server Transactions ID. May be provided as part of 3DSecure 2.0 authentication.
     /// Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     /// </summary>
     [JsonPropertyName("directory_server_id")]
-    public string DirectoryServerId { get; set; }
+    public string? DirectoryServerId { get; set; }
 
     #endregion
 
@@ -308,21 +316,21 @@ public abstract class BaseTransactionRequestDto
     /// A single use session ID used by Kount to link the transaction and Data Collector information together.
     /// </summary>
     [JsonPropertyName("transaction_session_id")]
-    public string TransactionSessionId { get; set; }
+    public string? TransactionSessionId { get; set; }
 
     /// <summary>
     /// Specifies a payment gateway transaction id in order to associate payment information with a Subscription or Customer Vault record.
     /// Must be set with a 'recurring' or 'customer_vault' action.
     /// </summary>
     [JsonPropertyName("source_transaction_id")]
-    public string SourceTransactionId { get; set; }
+    public string? SourceTransactionId { get; set; }
 
     /// <summary>
     /// You can pass custom information in up to 20 fields.
     /// Format: merchant_defined_field_1=Value
     /// </summary>
     [JsonPropertyName("merchant_defined_field_#")]
-    public string MerchantDefinedField { get; set; }
+    public string? MerchantDefinedField { get; set; }
 
     //Additional
     /// <summary>
@@ -337,7 +345,7 @@ public abstract class BaseTransactionRequestDto
     /// Format: base64 encoded raw PNG image. (16kiB maximum)
     /// </summary>
     [JsonPropertyName("signature_image")]
-    public string SignatureImage { get; set; }
+    public string? SignatureImage { get; set; }
 
     #endregion
 }

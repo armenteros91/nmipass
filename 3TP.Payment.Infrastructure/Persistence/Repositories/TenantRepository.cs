@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Application.Interfaces.Tenants;
 using ThreeTP.Payment.Domain.Entities.Tenant;
 using Tenant = ThreeTP.Payment.Domain.Entities.Tenant.Tenant;
@@ -22,7 +21,8 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 
         public async Task<Tenant?> GetByIdAsync(Guid id) => await GetOneAsync(t => t.TenantId == id);
 
-        public Task<Tenant?> GetByApiKeyAsync(string apiKey) => GetOneAsync(t => t.ApiKeys.Equals(apiKey));
+        public Task<Tenant?> GetByApiKeyAsync(string apiKey) => 
+            GetOneAsync(t => t.ApiKey != null && t.ApiKey.ApiKeyValue == apiKey && t.ApiKey.Status,x=>x.ApiKey,x=>x.Terminal);
 
         public async Task<bool> CompanyCodeExistsAsync(string companyCode) =>
             await ExistsAsync(tenant => tenant.CompanyCode==companyCode);

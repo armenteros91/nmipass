@@ -50,12 +50,16 @@ public class NmiDbContext : DbContext
                 builder.Property(nameof(BaseEntity.CreatedDate))
                     .IsRequired()
                     .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
-
+                
+                builder.Property(nameof(BaseEntity.LastModifiedDate))
+                    .HasMaxLength(25)
+                    
+                    ;
                 builder.Property(nameof(BaseEntity.CreatedBy))
                     .HasMaxLength(25)
                     .HasDefaultValueSql("USER_NAME()");
 
-                builder.Property(nameof(BaseEntity.ModifiedBy))
+                builder.Property(nameof(BaseEntity.LastModifiedBy))
                     .HasMaxLength(25);
 
                 builder.Property(nameof(BaseEntity.TimeStamp))

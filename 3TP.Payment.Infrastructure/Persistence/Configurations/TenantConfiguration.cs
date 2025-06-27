@@ -32,25 +32,6 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasDefaultValue(true);
 
-        // builder.Property(e => e.CreatedDate)
-        //     .IsRequired()
-        //     .HasDefaultValueSql("CONVERT(DATETIME2,DATEADD(HOUR, -5,GETDATE()),120)");
-        //
-        // builder.Property(e => e.CreatedBy)
-        //     .HasMaxLength(50)
-        //     .HasDefaultValueSql("USER_NAME()");
-        //
-        // builder.Property(e => e.ModifiedDate)
-        //     .IsRequired(false);
-        //
-        // builder.Property(e => e.ModifiedBy)
-        //     .HasMaxLength(50)
-        //     .IsRequired(false)
-        //     .HasDefaultValueSql("USER_NAME()");
-        //
-        // builder.Property(e => e.TimeStamp)
-        //     .IsRowVersion();
-
         // Relación 1:1 (Tenant has one Terminal, Terminal has one Tenant)
         // The Terminal entity will define the foreign key back to Tenant.
         // Tenant.Terminal is the navigation property.
@@ -58,5 +39,13 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .WithOne(terminal => terminal.Tenant)
             .HasForeignKey<Terminal>(terminal => terminal.TenantId) // Foreign key is in Terminal table
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure the one-to-one relationship between Tenant and TenantApiKey
+        // A Tenant has one ApiKey, and an ApiKey belongs to one Tenant.
+        // The foreign key TenantId is in the TenantApiKey table.
+        builder.HasOne(t => t.ApiKey)
+            .WithOne(a => a.Tenant)
+            .HasForeignKey<TenantApiKey>(a => a.TenantId)
+            .OnDelete(DeleteBehavior.Cascade); // Or DeleteBehavior.Restrict if preferred
     }
 }

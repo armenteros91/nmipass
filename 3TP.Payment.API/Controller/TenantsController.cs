@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.Tenants;
 using ThreeTP.Payment.Application.DTOs.Requests.Tenants;
 using ThreeTP.Payment.Application.Queries.Tenants;
-using ThreeTP.Payment.Domain.Entities.Tenant; // Assuming Tenant entity is returned by some queries/commands
 
 namespace ThreeTP.Payment.API.Controller;
 
@@ -33,7 +32,8 @@ public class TenantsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateTenantRequest request)
     {
         var tenant = await _mediator.Send(new CreateTenantCommand(request.CompanyName, request.CompanyCode));
-        return CreatedAtAction(nameof(GetById), new { tenantId = tenant.TenantId }, tenant); // Assuming tenant.Id is the ID
+        return CreatedAtAction(nameof(GetById), new { tenantId = tenant.TenantId },
+            tenant); // Assuming tenant.NmiTransactionRequestLogId is the ID
     }
 
     /// <summary>
@@ -45,6 +45,7 @@ public class TenantsController : ControllerBase
         await _mediator.Send(new UpdateTenantCommand(request.TenantId, request.CompanyName, request.CompanyCode));
         return NoContent();
     }
+
     /// <summary>
     /// Changes the active status of a tenant.
     /// </summary>

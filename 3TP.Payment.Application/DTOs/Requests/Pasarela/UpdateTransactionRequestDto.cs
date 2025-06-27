@@ -5,7 +5,7 @@ namespace ThreeTP.Payment.Application.DTOs.Requests.Pasarela
     public class UpdateTransactionRequestDto
     {
         [Required(ErrorMessage = "TransactionId is required")]
-        public Guid TransactionId { get; set; }  // ID de la transacción a actualizar
+        public string TransactionId { get; set; }  // ID de la transacción a actualizar
 
         // Campos actualizables
         public Guid? TypeTransactionsId { get; set; }  // Opcional: Cambiar tipo de transacción
@@ -14,7 +14,7 @@ namespace ThreeTP.Payment.Application.DTOs.Requests.Pasarela
         public string? Description { get; set; }  // Nueva descripción
 
         // Auditoría (quién actualiza)
-        [Required(ErrorMessage = "ModifiedBy is required for auditing")]
+        [Required(ErrorMessage = "LastModifiedBy is required for auditing")]
         public string ModifiedBy { get; set; }  // Ej: "user@email.com" o "system"
 
         // Metadata adicional (opcional)

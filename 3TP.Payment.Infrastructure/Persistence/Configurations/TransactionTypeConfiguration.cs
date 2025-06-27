@@ -10,14 +10,10 @@ public class TransactionTypeConfiguration : IEntityTypeConfiguration<Transaction
     {
         builder.ToTable("PlTblTransactionsType", "Payment");
 
-        builder.HasKey(t => t.TypeTransactionsId)
-            ;
+        builder.HasKey(t => t.TypeTransactionsId);
         builder.Property(t => t.Description).HasMaxLength(100).IsRequired();
         builder.Property(t => t.Status)
             .IsRequired()
             .HasDefaultValue(true);
-        // builder.Property(t => t.CreatedBy).HasMaxLength(50);
-        // builder.Property(t => t.ModifiedBy).HasMaxLength(50);
-        // builder.Property(t => t.TimeStamp).IsRowVersion();
     }
 }

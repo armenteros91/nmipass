@@ -12,8 +12,8 @@ using ThreeTP.Payment.Infrastructure.Persistence;
 namespace ThreeTP.Payment.Infrastructure.Migrations
 {
     [DbContext(typeof(NmiDbContext))]
-    [Migration("20250620161103_InitialMigrations")]
-    partial class InitialMigrations
+    [Migration("20250625194829_initialMigrations")]
+    partial class initialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,12 +27,9 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
 
             modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Nmi.NmiTransactionRequestLog", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("NmiTransactionRequestLogId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
                         .ValueGeneratedOnAdd()
@@ -45,24 +42,26 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
 
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
 
                     b.Property<string>("OrderId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("PayloadJson")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("NVARCHAR(MAX)");
 
                     b.Property<string>("RawContent")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("NVARCHAR(MAX)");
 
                     b.Property<byte[]>("TimeStamp")
                         .IsConcurrencyToken()
@@ -72,9 +71,16 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                    b.HasKey("NmiTransactionRequestLogId");
+
+                    b.HasIndex("CreatedDate")
+                        .HasDatabaseName("IX_CreatedAt");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("IX_OrderId");
 
                     b.ToTable("TblNmiTransactionRequestLog", "Logging");
                 });
@@ -96,30 +102,30 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("RawResponse")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ReceivedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("NVARCHAR(MAX)");
 
                     b.Property<Guid>("RequestId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<byte[]>("TimeStamp")
                         .IsConcurrencyToken()
@@ -128,11 +134,19 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("rowversion");
 
                     b.Property<string>("TransactionId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RequestId");
+                    b.HasIndex("CreatedDate")
+                        .HasDatabaseName("IX_TblNmiTransactionResponseLog_CreatedDate");
+
+                    b.HasIndex("RequestId")
+                        .HasDatabaseName("IX_TblNmiTransactionResponseLog_RequestId");
+
+                    b.HasIndex("TransactionId")
+                        .HasDatabaseName("IX_TblNmiTransactionResponseLog_TransactionId");
 
                     b.ToTable("TblNmiTransactionResponseLog", "Logging");
                 });
@@ -163,9 +177,8 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("Id")
-                        .HasMaxLength(10)
-                        .HasColumnType("int");
+                    b.Property<Guid>("FkTransactionsId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("KountScore")
                         .HasMaxLength(10)
@@ -179,12 +192,9 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("ReceivedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Response")
+                    b.Property<int>("Response")
                         .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)");
+                        .HasColumnType("int");
 
                     b.Property<string>("ResponseCode")
                         .HasMaxLength(10)
@@ -199,6 +209,8 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("TransaccionResponseId");
+
+                    b.HasIndex("FkTransactionsId");
 
                     b.ToTable("TblTransactionResponse", "Payment");
                 });
@@ -225,11 +237,12 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("Status")
@@ -266,11 +279,12 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("CONVERT(DATETIME2, DATEADD(HOUR, -5, GETDATE()), 120)");
 
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
 
                     b.Property<int>("ResponseCode")
@@ -292,6 +306,10 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                     b.Property<Guid>("TypeTransactionsId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TypeTransaction");
+
+                    b.Property<string>("paymentTransactionId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("TransactionsId");
 
@@ -339,11 +357,12 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
 
                     b.Property<byte[]>("TimeStamp")
@@ -383,11 +402,12 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("Status")
@@ -406,7 +426,8 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
 
                     b.HasKey("TenantApikeyId");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("TenantId")
+                        .IsUnique();
 
                     b.ToTable("TblApiKey", "Tenant");
                 });
@@ -433,11 +454,12 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
-                    b.Property<string>("ModifiedBy")
+                    b.Property<string>("LastModifiedBy")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasMaxLength(25)
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
@@ -465,15 +487,16 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
 
                     b.HasKey("TerminalId");
 
+                    b.HasIndex("SecretKeyEncrypted")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_Terminal_SecretKeyEncrypted");
+
                     b.HasIndex("SecretKeyHash")
                         .HasDatabaseName("IDX_Terminal_SecretHash");
 
                     b.HasIndex("TenantId")
-                        .HasDatabaseName("IDX_TblTerminalTenants_TenantId");
-
-                    b.HasIndex("TenantId", "SecretKeyEncrypted")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Tenant_SecretKey");
+                        .HasDatabaseName("UQ_TblTerminalTenants_TenantId");
 
                     b.ToTable("TblTerminalTenants", "Tenant");
                 });
@@ -483,10 +506,22 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                     b.HasOne("ThreeTP.Payment.Domain.Entities.Nmi.NmiTransactionRequestLog", "Request")
                         .WithMany("Responses")
                         .HasForeignKey("RequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_TblNmiTransactionResponseLog_TblNmiTransactionRequestLog_RequestId");
 
                     b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Nmi.TransactionResponse", b =>
+                {
+                    b.HasOne("ThreeTP.Payment.Domain.Entities.Payments.Transactions", "Transaction")
+                        .WithMany("Responses")
+                        .HasForeignKey("FkTransactionsId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Payments.Transactions", b =>
@@ -511,9 +546,9 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
             modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Tenant.TenantApiKey", b =>
                 {
                     b.HasOne("ThreeTP.Payment.Domain.Entities.Tenant.Tenant", "Tenant")
-                        .WithMany("ApiKeys")
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .WithOne("ApiKey")
+                        .HasForeignKey("ThreeTP.Payment.Domain.Entities.Tenant.TenantApiKey", "TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Tenant");
@@ -522,8 +557,8 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
             modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Tenant.Terminal", b =>
                 {
                     b.HasOne("ThreeTP.Payment.Domain.Entities.Tenant.Tenant", "Tenant")
-                        .WithMany("Terminals")
-                        .HasForeignKey("TenantId")
+                        .WithOne("Terminal")
+                        .HasForeignKey("ThreeTP.Payment.Domain.Entities.Tenant.Terminal", "TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -540,11 +575,16 @@ namespace ThreeTP.Payment.Infrastructure.Migrations
                     b.Navigation("Transactions");
                 });
 
+            modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Payments.Transactions", b =>
+                {
+                    b.Navigation("Responses");
+                });
+
             modelBuilder.Entity("ThreeTP.Payment.Domain.Entities.Tenant.Tenant", b =>
                 {
-                    b.Navigation("ApiKeys");
+                    b.Navigation("ApiKey");
 
-                    b.Navigation("Terminals");
+                    b.Navigation("Terminal");
                 });
 #pragma warning restore 612, 618
         }

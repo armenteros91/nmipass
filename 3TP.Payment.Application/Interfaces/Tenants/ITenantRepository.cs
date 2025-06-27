@@ -11,6 +11,4 @@ public interface ITenantRepository : IGenericRepository<Tenant>
     Task<bool> CompanyCodeExistsAsync(string companyCode);
     
     void Update(Tenant tenant);
-
-    void Addapikey(TenantApiKey tenantApiKey);
 }

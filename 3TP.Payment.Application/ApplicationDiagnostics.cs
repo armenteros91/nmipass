@@ -14,7 +14,7 @@ public static class ApplicationDiagnostics
             throw new InvalidOperationException("MediatR is not registered.");
 
         using var scope = provider.CreateScope();
-        var validator = scope.ServiceProvider.GetRequiredService<IValidator<BaseTransactionRequestDto>>();
+        var validator = scope.ServiceProvider.GetRequiredService<IValidator<SaleTransactionRequestDto>>();
         if (validator == null)
             throw new InvalidOperationException("Validators are not registered.");
         

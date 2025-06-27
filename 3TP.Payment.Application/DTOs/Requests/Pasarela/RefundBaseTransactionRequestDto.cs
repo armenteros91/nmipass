@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 
-public class RefundTransactionRequestDto : BaseTransactionRequestDto
+public class RefundBaseTransactionRequestDto : BaseTransactionRequestDto
 {
-    public RefundTransactionRequestDto() => TypeTransaction = "refund";
+    public RefundBaseTransactionRequestDto() => TypeTransaction = "refund";
 
     [Required]
     [JsonPropertyName("transactionid")]

@@ -71,12 +71,12 @@ public class BinLookupService
             try
             {
                 binlookupResponse = JsonConvert.DeserializeObject<BinlookupResponse>(responseContent)
-                                    ?? throw new JsonException("Deserialized response is null.");
+                                    ?? throw new JsonException("Deserialized Response is null.");
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Failed to deserialize API response for BIN: {BinNumber}", binNumber);
-                throw new InvalidOperationException("Failed to parse API response.", ex);
+                _logger.LogError(ex, "Failed to deserialize API Response for BIN: {BinNumber}", binNumber);
+                throw new InvalidOperationException("Failed to parse API Response.", ex);
             }
 
 

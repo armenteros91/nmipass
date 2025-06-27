@@ -14,14 +14,14 @@ public class Tenant : BaseEntityWithEvents
     public bool IsActive { get; set; }
 
 
-    private readonly List<TenantApiKey> _apiKeys = [];
-
     //public IReadOnlyCollection<TenantApiKey> ApiKeys => _apiKeys.AsReadOnly();
-    public ICollection<TenantApiKey> ApiKeys { get; set; } = new List<TenantApiKey>();
+    //MODIFIED: Changed from ICollection<TenantApiKey> to TenantApiKey?
+    public TenantApiKey? ApiKey { get; set; }
 
     // Changed from ICollection<Terminal> to Terminal?
     [JsonIgnore]
-    public virtual Terminal? Terminal { get; set; } //todo: evitar anidacion infinita al serializar objetos relacionados 
+    public virtual Terminal?
+        Terminal { get; set; } //todo: evitar anidacion infinita al serializar objetos relacionados 
 
     protected Tenant()
     {
@@ -45,7 +45,7 @@ public class Tenant : BaseEntityWithEvents
     public void Activate()
     {
         if (IsActive) return;
-        
+
         IsActive = true;
         AddDomainEvent(TenantActivatedEvent.Create(this));
     }
@@ -55,18 +55,15 @@ public class Tenant : BaseEntityWithEvents
         if (!IsActive) return;
         IsActive = false;
         AddDomainEvent(TenantDeactivatedEvent.Create(this));
-        
     }
 
+    //MODIFIED: Updated to handle a single API key
     public void AddApiKey(TenantApiKey apiKey)
     {
         if (apiKey == null)
             throw new InvalidTenantException(nameof(apiKey), "API key cannot be null");
-
-        if (_apiKeys.Any(k => k.ApiKeyValue == apiKey.ApiKeyValue))
-            throw new InvalidTenantException(nameof(apiKey), "API key already exists");
-
-        _apiKeys.Add(apiKey);
+        // Overwrite existing key if one is present
+        ApiKey = apiKey;
         AddDomainEvent(TenantApiKeyAddedEvent.Create(this, apiKey));
     }
 }

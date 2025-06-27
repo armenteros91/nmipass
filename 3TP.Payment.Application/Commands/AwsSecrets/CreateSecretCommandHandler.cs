@@ -15,7 +15,8 @@ namespace ThreeTP.Payment.Application.Commands.AwsSecrets
             IAwsSecretManagerService awsSecretManagerService,
             ILogger<CreateSecretCommandHandler> logger)
         {
-            _awsSecretManagerService = awsSecretManagerService ?? throw new ArgumentNullException(nameof(awsSecretManagerService));
+            _awsSecretManagerService = awsSecretManagerService ??
+                                       throw new ArgumentNullException(nameof(awsSecretManagerService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -36,7 +37,6 @@ namespace ThreeTP.Payment.Application.Commands.AwsSecrets
                 _logger.LogError(ex, "Error creating AWS secret: {SecretName}", createSecretCommand.Name);
                 throw;
             }
-            
         }
     }
 }

@@ -82,14 +82,16 @@ public static class PaymentInfrastructureExtensions
         // Register NmiDbContext with dependency injection
         services.AddDbContext<NmiDbContext>(options =>
             options.UseSqlServer(connectionString, sqlOptions =>
-                sqlOptions.EnableRetryOnFailure()));
+                    sqlOptions.EnableRetryOnFailure()
+                ).EnableSensitiveDataLogging()
+                .EnableDetailedErrors());
 
         // Register DbContextFactory for scenarios requiring factory-based instantiation
         // services.AddDbContextFactory<NmiDbContext>(options =>
         //     options.UseSqlServer(configuration.GetConnectionString("NmiDb")));
 
         // Register a startup service to apply migrations automatically
-      //  services.AddHostedService<DatabaseMigrationService>();
+        //  services.AddHostedService<DatabaseMigrationService>();
     }
 
     private static void AddAwsSecretManagerServices(this IServiceCollection services, IConfiguration configuration)
@@ -103,10 +105,9 @@ public static class PaymentInfrastructureExtensions
             return new AmazonSecretsManagerClient(credentials, region);
         });
         services.AddMemoryCache();
-        services.AddScoped<IAwsSecretManagerService, AwsSecretManagerService>();
-        services.AddScoped<IAwsSecretCacheService, AwsSecretCacheService>();
-        
+
         //aws secret 
+        services.AddScoped<IAwsSecretManagerService, AwsSecretManagerService>(); //old
         services.AddScoped<IAwsSecretCacheService, AwsSecretCacheService>();
         services.AddScoped<IAwsSecretsProvider, AwsSecretsProvider>();
         services.AddScoped<IAwsSecretSyncService, AwsSecretSyncService>();
@@ -114,20 +115,33 @@ public static class PaymentInfrastructureExtensions
 
     private static void AddNmiPaymentServices(this IServiceCollection services, IConfiguration configuration)
     {
+
+        services.AddOptions<NmiSettings>()
+            .Bind(configuration.GetSection("NmiSettings"))
+            .ValidateOnStart();// valida en startup
+          //  .ValidateDataAnnotations(); // si usas [Required] en el modelo
+
+        services.AddSingleton<IValidateOptions<NmiSettings>, NmiSettingsValidator>();
+        
+        
         var nmiSettings = configuration.GetSection("NmiSettings").Get<NmiSettings>()
                           ?? throw new InvalidOperationException("NmiSettings configuration is missing.");
 
-        if (string.IsNullOrEmpty(nmiSettings.BaseURL))
+        if (string.IsNullOrEmpty(nmiSettings.BaseUrl))
             throw new InvalidOperationException("NmiSettings:BaseURL is required.");
         if (nmiSettings.Endpoint?.Transaction == null)
             throw new InvalidOperationException("NmiSettings:Endpoint:Transaction is required.");
         if (nmiSettings.Query?.QueryApi == null)
             throw new InvalidOperationException("NmiSettings:Query:QueryApi is required.");
 
-        services.AddSingleton(nmiSettings);
-        services.AddHttpClient<INmiPaymentGateway, NmiPaymentService>(client =>
+        services.AddSingleton<IValidateOptions<NmiSettings>, NmiSettingsValidator>();
+        
+        services.AddHttpClient<INmiPaymentGateway, NmiPaymentService>((provider, client) =>
         {
-            client.BaseAddress = new Uri(nmiSettings.BaseURL);
+            var options = provider.GetRequiredService<IOptions<NmiSettings>>();
+            var settings = options.Value;
+
+            client.BaseAddress = new Uri(settings.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add("User-Agent", "NMIPaymentSDK/1.0");
         });

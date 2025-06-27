@@ -30,7 +30,7 @@ namespace ThreeTP.Payment.API.Middleware
                 return;
             }
 
-            context.Items["Tenant"] = tenant;  // Para uso en controllers
+            context.Items["Tenant"] = tenant; // Para uso en controllers
             await _next(context);
         }
     }

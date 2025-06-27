@@ -10,16 +10,31 @@ public class NmiTransactionResponseLogConfiguration : IEntityTypeConfiguration<N
     {
         builder.ToTable("TblNmiTransactionResponseLog", "Logging");
 
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.Status).IsRequired();
-        builder.Property(x => x.Message).IsRequired();
-        builder.Property(x => x.TransactionId);
-        builder.Property(x => x.RawResponse).IsRequired();
-        builder.Property(x => x.ReceivedAt);
+        builder.HasKey(x => x.NmiTransactionResponseLogId);
+        
+        builder.Property(x => x.Status)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(x => x.Message)
+            .IsRequired()
+            .HasMaxLength(255);
+
+        builder.Property(x => x.TransactionId)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.RawResponse)
+            .IsRequired()
+            .HasColumnType("NVARCHAR(MAX)");
+        
+        builder.HasIndex(x => x.RequestId).HasDatabaseName("IX_TblNmiTransactionResponseLog_RequestId");
+        builder.HasIndex(x => x.TransactionId).HasDatabaseName("IX_TblNmiTransactionResponseLog_TransactionId");
+        builder.HasIndex(x => x.CreatedDate).HasDatabaseName("IX_TblNmiTransactionResponseLog_CreatedDate");
 
         builder.HasOne(x => x.Request)
-            .WithMany(x => x.Responses)
+            .WithMany(x=>x.Responses)
             .HasForeignKey(x => x.RequestId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_TblNmiTransactionResponseLog_TblNmiTransactionRequestLog_RequestId");
     }
 }

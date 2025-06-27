@@ -1,5 +1,4 @@
 using MediatR;
-using System;
 
 namespace ThreeTP.Payment.Application.Commands.Tenants
 {

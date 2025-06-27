@@ -27,7 +27,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 
         public async Task<Terminal?> GetByIdAsync(Guid id)
         {
-            _logger.LogInformation("Getting terminal by TerminalId {Id}", id); // Corrected log message
+            _logger.LogInformation("Getting terminal by TerminalId {NmiTransactionRequestLogId}", id); // Corrected log message
             return await GetOneAsync(t => t.TerminalId == id); // Corrected to filter by TerminalId
         }
 
@@ -45,7 +45,7 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
 
         public async Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId)
         {
-            _logger.LogInformation("Getting decrypted secret key for terminal Id: {TerminalId}", terminalId);
+            _logger.LogInformation("Getting decrypted secret key for terminal NmiTransactionRequestLogId: {TerminalId}", terminalId);
             var terminal = await GetByIdAsync(terminalId);
             return terminal != null
                 ? _encryptionService.Decrypt(terminal.SecretKeyEncrypted)

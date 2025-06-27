@@ -35,7 +35,7 @@ namespace ThreeTP.Payment.Application.Queries.Tenants
             }
             else
             {
-                _logger.LogInformation("Successfully fetched tenant with Id {TenantId} using API Key.", tenant.TenantId);
+                _logger.LogInformation("Successfully fetched tenant with NmiTransactionRequestLogId {TenantId} using API Key.", tenant.TenantId);
             }
             return tenant;
         }

@@ -22,39 +22,13 @@ public class TenantApiKeyConfiguration : IEntityTypeConfiguration<TenantApiKey>
             .IsRequired()
             .HasDefaultValue(true);
 
-        // Relación explícita
-        builder.HasOne(x => x.Tenant)
-            .WithMany(t => t.ApiKeys) // Asegúrate de tener esta colección en Tenant
-            .HasForeignKey(x => x.TenantId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // Relación explícita: Un TenantApiKey pertenece a un Tenant,
+        // y un Tenant tiene una propiedad de navegación ApiKey que apunta a este TenantApiKey.
+        builder.HasOne(apiKey => apiKey.Tenant)
+            .WithOne(tenant => tenant.ApiKey)
+            .HasForeignKey<TenantApiKey>(apiKey => apiKey.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
 
 
-        //     builder.ToTable("TenantApiKeys", "Tenant");
-        //
-        //     builder.HasKey(e => e.TenantApikeyId);
-        //
-        //     builder.Property(e => e.TenantApikeyId)
-        //         .IsRequired()
-        //         .HasDefaultValueSql("NEWID()");
-        //
-        //     builder.Property(e => e.TenantApikeyId)
-        //         .HasColumnName("ApiKey")
-        //         .HasMaxLength(10)
-        //         .IsRequired();
-        //
-        //     builder.Property(e => e.TenantId)
-        //         .IsRequired();
-        //
-        //     builder.Property(e => e.Description)
-        //         .HasMaxLength(100)
-        //         .IsRequired(false);
-        //
-        //     builder.Property(e => e.Status);
-        //
-        //     builder.Property(e => e.CreatedDate)
-        //         .IsRequired()
-        //         .HasDefaultValueSql("CONVERT(DATETIME2,DATEADD(HOUR, -5,GETDATE()),120)");
-        //
-        
     }
 }

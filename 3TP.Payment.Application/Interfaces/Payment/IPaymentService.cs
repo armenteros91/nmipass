@@ -5,7 +5,7 @@ namespace ThreeTP.Payment.Application.Interfaces.Payment;
 
 public interface IPaymentService
 {
-    Task<NmiResponseDto> ProcessPaymentAsync(string apiKey, BaseTransactionRequestDto paymentRequest);
+    Task<NmiResponseDto> ProcessPaymentAsync(string apiKey, SaleTransactionRequestDto paymentRequest);
 
     Task<QueryResponseDto> QueryProcessPaymentAsync(string apiKey, QueryTransactionRequestDto queryTransactionRequest);
 }

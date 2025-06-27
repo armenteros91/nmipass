@@ -5,6 +5,6 @@ namespace ThreeTP.Payment.Application.Interfaces.Payment;
 
 public interface INmiPaymentGateway
 {
-    Task<NmiResponseDto> SendAsync<TRequest>(TRequest dto) where TRequest : BaseTransactionRequestDto;   
+    Task<NmiResponseDto> SendAsync<TRequest>(TRequest dto) where TRequest : SaleTransactionRequestDto;   
     Task<QueryResponseDto> QueryAsync(QueryTransactionRequestDto dto);
 }

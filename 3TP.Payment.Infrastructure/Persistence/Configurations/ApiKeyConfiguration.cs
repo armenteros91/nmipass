@@ -38,10 +38,10 @@ public class ApiKeyConfiguration : IEntityTypeConfiguration<TenantApiKey>
             .HasMaxLength(25)
             .HasDefaultValueSql("USER_NAME()");
             
-        builder.Property(e => e.ModifiedDate)
+        builder.Property(e => e.LastModifiedDate)
             .IsRequired(false);
             
-        builder.Property(e => e.ModifiedBy)
+        builder.Property(e => e.LastModifiedBy)
             .HasMaxLength(25)
             .IsRequired(false);
             

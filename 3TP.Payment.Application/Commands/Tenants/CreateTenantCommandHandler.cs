@@ -41,24 +41,25 @@ namespace ThreeTP.Payment.Application.Commands.Tenants
                 await _unitOfWork.TenantRepository.AddAsync(tenant);
 
                 // Generate API Key and add it to the tenant
-                var apiKey = Utils.GenerateApiKey();
-
-                var tenantApiKey = new TenantApiKey(apiKey, tenant.TenantId);
-                await _tenantService.AddApiKeyAsync(tenant.TenantId, apiKey, "ApiKey for " + tenant.CompanyName, true);
+                var apiKeyString = Utils.GenerateApiKey();
+                var tenantApiKey = new TenantApiKey(apiKeyString, tenant.TenantId)
+                {
+                    Description = $"Default API Key for {tenant.CompanyName}",
+                    Status = true
+                };
+                tenant.AddApiKey(tenantApiKey); // This now sets the single ApiKey property on the tenant
 
                 tenant.AddDomainEvent(TenantActivatedEvent.Create(tenant));
-
                 await _unitOfWork.CommitAsync(cancellationToken);
 
                 _logger.LogInformation(
-                    "Tenant {CompanyName} created successfully with Id {TenantId} and APIKey {ApiKey}",
-                    tenant.CompanyName, tenant.TenantId, apiKey);
+                    "Tenant {CompanyName} created successfully with NmiTransactionRequestLogId {TenantId} and APIKey {ApiKey}",
+                    tenant.CompanyName, tenant.TenantId, apiKeyString); // Logging the key value for information
                 return tenant;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating tenant {CompanyName}", request.CompanyName);
-
                 throw;
             }
         }

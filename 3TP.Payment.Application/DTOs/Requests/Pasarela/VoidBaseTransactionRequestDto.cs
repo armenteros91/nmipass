@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
 
-public class VoidTransactionRequestDto : BaseTransactionRequestDto
+public class VoidBaseTransactionRequestDto : BaseTransactionRequestDto
 {
-    public VoidTransactionRequestDto() => TypeTransaction = "void";
+    public VoidBaseTransactionRequestDto() => TypeTransaction = "void";
 
     /// <summary>
     /// Original payment gateway transaction id
