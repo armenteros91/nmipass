@@ -43,13 +43,13 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             return await GetOneAsync(t => t.TenantId == tenantId); // Changed to GetOneAsync
         }
 
-        public async Task<string?> GetDecryptedSecretKeyAsync(Guid terminalId)
+        // Renamed from GetDecryptedSecretKeyAsync
+        public async Task<string?> GetSecretIdentifierAsync(Guid terminalId)
         {
-            _logger.LogInformation("Getting decrypted secret key for terminal NmiTransactionRequestLogId: {TerminalId}", terminalId);
+            _logger.LogInformation("Getting secret identifier for terminal: {TerminalId}", terminalId);
             var terminal = await GetByIdAsync(terminalId);
-            return terminal != null
-                ? _encryptionService.Decrypt(terminal.SecretKeyEncrypted)
-                : null;
+            // SecretKeyEncrypted now stores the ARN or identifier directly, no decryption needed.
+            return terminal?.SecretKeyEncrypted;
         }
 
         public new async Task AddAsync(Terminal entity)
@@ -58,10 +58,11 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
             if (string.IsNullOrWhiteSpace(entity.SecretKeyEncrypted))
                 throw new ArgumentException("SecretKeyEncrypted is required.");
 
-            // Encripta y hashea el secreto antes de persistir
-            var plainSecretKey = entity.SecretKeyEncrypted;
-            entity.SecretKeyEncrypted = _encryptionService.Encrypt(plainSecretKey);
-            entity.SecretKeyHash = Utils.ComputeSha256(plainSecretKey);
+            // The SecretKeyEncrypted field will now store the AWS Secret ARN (or other identifier) directly, no encryption needed.
+            // The plainSecretKey variable now actually holds the ARN.
+            var secretIdentifier = entity.SecretKeyEncrypted;
+            // entity.SecretKeyEncrypted is already set with the ARN.
+            entity.SecretKeyHash = Utils.ComputeSha256(secretIdentifier); // Hash the ARN
 
             await base.AddAsync(entity);
             _logger.LogInformation("Terminal {TerminalId} added for Tenant {TenantId}", entity.TerminalId, entity.TenantId);
@@ -81,7 +82,9 @@ namespace ThreeTP.Payment.Infrastructure.Persistence.Repositories
                 throw new InvalidOperationException("Terminal not found.");
             }
 
-            terminal.SecretKeyEncrypted = _encryptionService.Encrypt(newPlainSecretKey);
+            // newPlainSecretKey is now the AWS Secret ARN (or other identifier), store it directly.
+            terminal.SecretKeyEncrypted = newPlainSecretKey;
+            // Update the hash to be the hash of the ARN.
             terminal.SecretKeyHash = Utils.ComputeSha256(newPlainSecretKey);
 
             _dbContext.Set<Terminal>().Update(terminal);

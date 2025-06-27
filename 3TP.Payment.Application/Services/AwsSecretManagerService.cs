@@ -97,14 +97,16 @@ namespace ThreeTP.Payment.Application.Services
                 //2.vincular el secreto a un terminal 
                 if (command.TerminalId.HasValue)
                 {
-                    var terminal = await _unitOfWork.TenantRepository.GetByIdAsync(command.TerminalId.Value);
+                    // Bug fix: Should be TerminalRepository instead of TenantRepository
+                    var terminal = await _unitOfWork.TerminalRepository.GetByIdAsync(command.TerminalId.Value);
 
                     if (terminal is not null)
                     {
+                        // Store ARN instead of secret string
                         await _unitOfWork.TerminalRepository
                             .UpdateSecretKeyAsync(
                                 command.TerminalId.Value,
-                                command.SecretString); // La encriptación se maneja en el repositorio
+                                response.ARN);
                     }
                 }
 
@@ -154,19 +156,24 @@ namespace ThreeTP.Payment.Application.Services
                 if (command.TerminalId.HasValue)
                 {
                     var terminalId = command.TerminalId.Value;
-
+                    // Note: The original code already correctly uses _unitOfWork.TerminalRepository.GetByIdAsync here.
                     var terminal = await _unitOfWork.TerminalRepository.GetByIdAsync(terminalId);
                     if (terminal != null)
                     {
+                        // Store ARN instead of secret string.
+                        // response.ARN should be the correct identifier.
+                        // If response.ARN is null or empty, we might need to use updateRequest.SecretId if it's guaranteed to be an ARN.
+                        // For now, assuming response.ARN is populated.
                         await _unitOfWork.TerminalRepository.UpdateSecretKeyAsync(
                             terminalId,
-                            command.NewSecretString
+                            response.ARN
                         );
                     }
                 }
 
                 await _unitOfWork.CommitAsync(cancellationToken);
-                InvalidateCacheForSecret(command.SecretId);
+                // Invalidate cache using the ARN, which might be different from command.SecretId if command.SecretId was a friendly name
+                InvalidateCacheForSecret(response.ARN ?? command.SecretId);
 
                 return response;
             }
