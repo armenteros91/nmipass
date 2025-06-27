@@ -12,6 +12,7 @@ using ThreeTP.Payment.Application.Interfaces.Payment;
 using ThreeTP.Payment.Application.Interfaces.Repository;
 using ThreeTP.Payment.Application.Interfaces.Tenants;
 using ThreeTP.Payment.Application.Interfaces.Terminals;
+using ThreeTP.Payment.Application.Interfaces.Services; // Added for IBinLookupService
 using ThreeTP.Payment.Application.Mappings;
 using ThreeTP.Payment.Application.Options;
 using ThreeTP.Payment.Application.Services;
@@ -150,7 +151,7 @@ public static class PaymentInfrastructureExtensions
     private static void AddNeutrinoServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<NeutrinoApiOptions>(configuration.GetSection("NeutrinoApi"));
-        services.AddHttpClient<BinLookupService>();
+        services.AddHttpClient<IBinLookupService, BinLookupService>(); // Changed to register interface
         services.AddHttpContextAccessor();
 
         services.Configure<ForwardedHeadersOptions>(options =>
