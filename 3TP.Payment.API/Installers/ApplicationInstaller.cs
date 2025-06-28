@@ -3,10 +3,12 @@ using MediatR;
 using ThreeTP.Payment.Application.Behaviors;
 using ThreeTP.Payment.Application.Interfaces;
 using ThreeTP.Payment.Application.Interfaces.Payment;
+using ThreeTP.Payment.Application.Interfaces.Services;
 using ThreeTP.Payment.Application.Interfaces.Tenants;
 using ThreeTP.Payment.Application.Interfaces.Terminals;
 using ThreeTP.Payment.Application.Services;
 using ThreeTP.Payment.Infrastructure.Events;
+using ThreeTP.Payment.Infrastructure.Services.Neutrino;
 
 namespace ThreeTP.Payment.API.Installers;
 
@@ -44,6 +46,7 @@ public static class ApplicationInstaller
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<ITenantService, TenantService>(); // Added based on existence
         services.AddScoped<ITerminalService, TerminalService>(); // Added
+        services.AddScoped<IBinLookupService, BinLookupService>();
 
         return services;
     }

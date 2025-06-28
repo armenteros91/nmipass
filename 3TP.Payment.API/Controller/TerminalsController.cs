@@ -1,7 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ThreeTP.Payment.Application.Commands.Terminals;
 using ThreeTP.Payment.Application.DTOs.Requests.Terminals;
 using ThreeTP.Payment.Application.DTOs.Responses.Terminals;
-using ThreeTP.Payment.Application.Interfaces.Terminals;
+using ThreeTP.Payment.Application.Queries.Terminals;
 
 namespace ThreeTP.Payment.API.Controller;
 
@@ -9,53 +11,39 @@ namespace ThreeTP.Payment.API.Controller;
 [ApiController]
 public class TerminalsController : ControllerBase
 {
-    private readonly ITerminalService _terminalService;
+    private readonly IMediator _mediator;
     private readonly ILogger<TerminalsController> _logger;
 
-    public TerminalsController(
-        ITerminalService terminalService,
-        ILogger<TerminalsController> logger)
+    public TerminalsController(IMediator mediator, ILogger<TerminalsController> logger)
     {
-        _terminalService = terminalService;
+        _mediator = mediator;
         _logger = logger;
     }
 
     /// <summary>
-    /// Creates a new terminal for a specified tenant.
+    /// Creates a new terminal.
     /// </summary>
-    /// <param name="tenantId">The ID of the tenant for whom the terminal is being created.</param>
     /// <param name="createRequest">The terminal creation request data.</param>
     /// <returns>The created terminal's details.</returns>
-    [HttpPost("terminal")] // Route changed to singular "terminal"
-    [ProducesResponseType(typeof(TerminalResponseDto), 201)]
-    [ProducesResponseType(400)] // Bad Request (validation errors)
-    [ProducesResponseType(404)] // Tenant Not Found
-    [ProducesResponseType(409)] // Conflict (Terminal already exists for tenant)
-    public async Task<IActionResult> CreateTerminalForTenant(
-        [FromBody] CreateTerminalRequestDto createRequest)
+    [HttpPost("terminals")] // Changed route to "terminals" from "terminal" for consistency
+    [ProducesResponseType(typeof(TerminalResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)] // Tenant Not Found
+    [ProducesResponseType(StatusCodes.Status409Conflict)] // Conflict (Terminal already exists for tenant)
+    public async Task<IActionResult> CreateTerminal([FromBody] CreateTerminalRequestDto createRequest)
     {
-       
-
-        // It's good practice to ensure the TenantId in the path matches the one in the body, if present.
-        // Or, set it from the path to ensure consistency if the DTO also has TenantId.
-        // For this example, assuming CreateTerminalRequestDto's TenantId will be used or set by the service/handler.
-        // If CreateTerminalRequestDto.TenantId is meant to be ignored or validated against tenantId from path, adjust logic.
-        // Let's assume the service layer will handle the TenantId from the DTO.
-
-        // If your CreateTerminalRequestDto doesn't have TenantId, you'd pass it to the service method.
-        // e.g., var terminal = await _terminalService.CreateTerminalAsync(tenantId, createRequest);
-        // Since CreateTerminalRequestDto *does* have TenantId, we pass it as is.
-        // Consider adding validation to ensure tenantId in path matches tenantId in DTO if both are present.
-
-
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
 
         try
         {
-            var terminal = await _terminalService.CreateTerminalAsync(createRequest);
-            // Assuming GetTerminalByIdAsync exists and is the correct route for "CreatedAtAction"
+            var command = new CreateTerminalCommand(createRequest);
+            var terminal = await _mediator.Send(command);
             return CreatedAtAction(nameof(GetTerminalById), new { terminalId = terminal.TerminalId }, terminal);
         }
-        catch (Application.Common.Exceptions.CustomValidationException ex) // Or your specific validation exception
+        catch (Application.Common.Exceptions.CustomValidationException ex)
         {
             return BadRequest(ex.Errors);
         }
@@ -63,12 +51,15 @@ public class TerminalsController : ControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
-        catch (InvalidOperationException ex) // Catch if tenant already has a terminal
+        catch (InvalidOperationException ex) // Catch if tenant already has a terminal or other service layer validation
         {
-            // This exception is thrown by CreateTerminalCommandHandler
             return Conflict(new { message = ex.Message });
         }
-        // Add other specific exception handling as needed
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating terminal.");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the terminal.");
+        }
     }
 
     /// <summary>
@@ -77,8 +68,8 @@ public class TerminalsController : ControllerBase
     /// <param name="terminalId">The ID of the terminal to retrieve.</param>
     /// <returns>The terminal details if found; otherwise, Not Found.</returns>
     [HttpGet("terminals/{terminalId:guid}")]
-    [ProducesResponseType(typeof(TerminalResponseDto), 200)]
-    [ProducesResponseType(404)] // Not Found
+    [ProducesResponseType(typeof(TerminalResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTerminalById(Guid terminalId)
     {
         if (terminalId == Guid.Empty)
@@ -86,79 +77,59 @@ public class TerminalsController : ControllerBase
             return BadRequest(new { message = "Terminal ID is required." });
         }
 
-        var terminal = await _terminalService.GetTerminalByIdAsync(terminalId);
-        if (terminal == null)
+        try
         {
-            return NotFound(new { message = $"Terminal with ID {terminalId} not found." });
+            var query = new GetTerminalByIdQuery(terminalId);
+            var terminal = await _mediator.Send(query);
+            return terminal != null ? Ok(terminal) : NotFound(new { message = $"Terminal with ID {terminalId} not found." });
         }
-
-        return Ok(terminal);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving terminal by ID {TerminalId}", terminalId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the terminal.");
+        }
     }
 
     /// <summary>
-    /// Retrieves all terminals associated with a specific tenant.
+    /// Retrieves the terminal associated with a specific tenant.
     /// </summary>
     /// <param name="tenantId">The ID of the tenant whose terminal is to be retrieved.</param>
     /// <returns>The terminal details if found for the specified tenant; otherwise, Not Found.</returns>
-    [HttpGet("tenants/{tenantId:guid}/terminal")] // Route changed to singular "terminal"
-    [ProducesResponseType(typeof(TerminalResponseDto), 200)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> GetTerminalByTenantId(Guid tenantId) // Method name changed
+    [HttpGet("tenants/{tenantId:guid}/terminal")]
+    [ProducesResponseType(typeof(TerminalResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTerminalByTenantId(Guid tenantId)
     {
         if (tenantId == Guid.Empty)
         {
             return BadRequest(new { message = "Tenant ID is required." });
         }
-
-        var terminal = await _terminalService.GetTerminalByTenantIdAsync(tenantId); // Use the new service method
-        if (terminal == null)
+        try
         {
-            // This could mean tenant not found, or tenant exists but has no terminal.
-            // Depending on desired behavior, you might want to differentiate.
-            // For now, returning 404 if no terminal is found for the tenant.
-            return NotFound(new { message = $"Terminal not found for Tenant ID {tenantId}." });
+            var query = new GetTerminalByTenantIdQuery(tenantId);
+            var terminal = await _mediator.Send(query);
+            return terminal != null ? Ok(terminal) : NotFound(new { message = $"Terminal not found for Tenant ID {tenantId}." });
         }
-
-        return Ok(terminal);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving terminal by Tenant ID {TenantId}", tenantId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the terminal for the tenant.");
+        }
     }
 
-    // /// <summary>
-    // /// Updates an existing terminal.
-    // /// </summary>
-    // /// <param name="terminalId">The ID of the terminal to update.</param>
-    // /// <param name="updateRequest">The terminal update request data.</param>
-    // /// <returns>No Content if successful; Not Found if terminal doesn't exist.</returns>
-    // [HttpPut("terminals/{terminalId:guid}")]
-    // [ProducesResponseType(204)] // No Content
-    // [ProducesResponseType(400)] // Bad Request (validation errors)
-    // [ProducesResponseType(404)] // Not Found
-    // public async Task<IActionResult> UpdateTerminal(Guid terminalId,
-    //     [FromBody] UpdateTerminalAndSecretRequest updateRequest)
-    // {
-    //     try
-    //     {
-    //         var success = await _terminalService.UpdateTerminalAsync(terminalId, updateRequest);
-    //         if (!success)
-    //         {
-    //             return NotFound(new { message = $"Terminal with ID {terminalId} not found or update failed." });
-    //         }
-    //
-    //         return NoContent();
-    //     }
-    //     catch (Application.Common.Exceptions.CustomValidationException ex)
-    //     {
-    //         return BadRequest(ex.Errors);
-    //     }
-    //     // Catch specific "NotFound" exception if your service/handler throws it
-    //     // catch (TerminalNotFoundException ex)
-    //     // {
-    //     //     return NotFound(new { message = ex.Message });
-    //     // }
-    // }
-
-
+    /// <summary>
+    /// Updates an existing terminal and optionally its associated AWS secret.
+    /// </summary>
+    /// <param name="terminalId">The ID of the terminal to update.</param>
+    /// <param name="request">The terminal update request data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No Content if successful; Not Found if terminal doesn't exist; Bad Request for invalid data.</returns>
     [HttpPut("terminals/{terminalId:guid}")]
-    public async Task<IActionResult> UpdateTerminalAsync(
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateTerminal(
         Guid terminalId,
         [FromBody] UpdateTerminalAndSecretRequest request,
         CancellationToken cancellationToken)
@@ -167,20 +138,39 @@ public class TerminalsController : ControllerBase
         {
             return BadRequest("Request body is required.");
         }
-
-        //  var command = new UpdateTerminalCommand(terminalId, request);
-        var result = await _terminalService.UpdateTerminalAndSecretAsync(
-            terminalId, request, cancellationToken);
-
-        if (!result)
+        if (!ModelState.IsValid)
         {
-            return NotFound($"Terminal with ID {terminalId} not found or update failed.");
+            return BadRequest(ModelState);
         }
 
-        return NoContent();
+        try
+        {
+            // The UpdateTerminalCommand now encapsulates the logic previously in UpdateTerminalAndSecretAsync
+            var command = new UpdateTerminalCommand(terminalId, request);
+            var success = await _mediator.Send(command, cancellationToken);
+
+            return success ? NoContent() : NotFound($"Terminal with ID {terminalId} not found or update failed.");
+        }
+        catch (Application.Common.Exceptions.CustomValidationException ex)
+        {
+            return BadRequest(ex.Errors);
+        }
+        catch (Domain.Exceptions.TenantNotFoundException ex) // Example if command handler throws this
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating terminal {TerminalId}", terminalId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the terminal.");
+        }
     }
 
-
+    /// <summary>
+    /// Retrieves all terminals.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of all terminals.</returns>
     [HttpGet("terminals/all")]
     [ProducesResponseType(typeof(List<TerminalResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -188,13 +178,14 @@ public class TerminalsController : ControllerBase
     {
         try
         {
-            var terminals = await _terminalService.GetAllTerminalsAsync();
+            var query = new GetAllTerminalsQuery();
+            var terminals = await _mediator.Send(query, cancellationToken);
             return Ok(terminals);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving terminals");
-            return StatusCode(500, "An error occurred while retrieving terminals.");
+            _logger.LogError(ex, "Error retrieving all terminals");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving terminals.");
         }
     }
 }

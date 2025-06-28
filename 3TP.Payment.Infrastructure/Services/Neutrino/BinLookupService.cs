@@ -3,10 +3,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using ThreeTP.Payment.Application.DTOs.Responses.BIN_Checker;
+using ThreeTP.Payment.Application.Interfaces.Services; // Added for IBinLookupService
 
 namespace ThreeTP.Payment.Infrastructure.Services.Neutrino;
 
-public class BinLookupService
+public class BinLookupService : IBinLookupService // Implement the interface
 {
     private readonly HttpClient _httpClient;
     private readonly NeutrinoApiOptions _neutrinoApiOptions;
@@ -33,7 +34,7 @@ public class BinLookupService
 
     public async Task<BinlookupResponse> GetBinLookupAsync(string binNumber)
     {
-        BinlookupResponse binlookupResponse =new BinlookupResponse();
+        BinlookupResponse binlookupResponse = new BinlookupResponse(); // Ensure constructor is called if not a struct
         
         if (string.IsNullOrWhiteSpace(binNumber))
         {
