@@ -1,5 +1,6 @@
 using Amazon.SecretsManager.Model;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.AwsSecrets;
 using ThreeTP.Payment.Application.DTOs.aws;
@@ -7,6 +8,7 @@ using ThreeTP.Payment.Application.Queries.AwsSecrets;
 
 namespace ThreeTP.Payment.API.Controller;
 
+[Authorize]
 [ApiController]
 [Route("api/secrets")]
 public class SecretsController : ControllerBase

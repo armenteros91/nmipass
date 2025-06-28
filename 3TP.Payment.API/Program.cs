@@ -1,8 +1,12 @@
 using Serilog;
+using Serilog;
 using ThreeTP.Payment.API.Installers;
 using ThreeTP.Payment.API.Middleware;
 using ThreeTP.Payment.Application;
 using ThreeTP.Payment.Infrastructure.Loggin;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +24,25 @@ builder.Services
     .AddApplication()
     .AddControllers();
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -34,6 +57,9 @@ ApplicationLogger.LogStartup(builder.Environment.EnvironmentName);
 //Middlewares
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 // app.UseMiddleware<ApiKeyAuthMiddleware>();
+
+app.UseAuthentication(); // Add this line
+app.UseAuthorization(); // Add this line
 
 if (builder.Environment.IsDevelopment())
 {

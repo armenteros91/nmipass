@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.Tenants;
 using ThreeTP.Payment.Application.DTOs.Requests.Tenants;
@@ -6,6 +7,7 @@ using ThreeTP.Payment.Application.Queries.Tenants;
 
 namespace ThreeTP.Payment.API.Controller;
 
+[Authorize]
 [ApiController]
 [Route("api/tenants")]
 public class TenantsController : ControllerBase

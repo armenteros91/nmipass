@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.Payments;
 using ThreeTP.Payment.Application.DTOs.Requests.Pasarela;
@@ -12,6 +13,7 @@ namespace ThreeTP.Payment.API.Controller
     /// <summary>
     /// Manages payment processing and transaction queries for the NMI payment gateway.
     /// </summary>
+    [Authorize]
     [ApiController]
     [Route("api/payments")]
     public class PaymentsController : ControllerBase

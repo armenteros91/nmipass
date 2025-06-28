@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThreeTP.Payment.Application.Commands.Terminals;
 using ThreeTP.Payment.Application.DTOs.Requests.Terminals;
@@ -7,6 +8,7 @@ using ThreeTP.Payment.Application.Queries.Terminals;
 
 namespace ThreeTP.Payment.API.Controller;
 
+[Authorize]
 [Route("api/")]
 [ApiController]
 public class TerminalsController : ControllerBase
